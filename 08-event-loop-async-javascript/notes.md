@@ -132,7 +132,7 @@ console.log('1b - sync');
 | | Microtasks | Macrotasks |
 |--|-----------|------------|
 | **Examples** | `Promise.then/catch/finally`, `queueMicrotask`, `MutationObserver` | `setTimeout`, `setInterval`, `setImmediate`, I/O callbacks, UI events |
-| **Priority** | High — run before next macrotask | Low — run one per loop tick |
+| **Priority** | High — run before next macrotask | Low — run one per tick |
 | **Queue drain** | All at once | One per tick |
 
 ```js
@@ -462,10 +462,255 @@ const fastData = await Promise.any([cdn1, cdn2, cdn3]);
 
 ---
 
+<details>
+<summary><strong>19. How is a Promise executed internally?</strong></summary>
+
+The **executor function** passed to `new Promise()` runs **synchronously** and immediately. Only the resolution callbacks (`.then`, `.catch`) are scheduled as microtasks.
+
+```js
+console.log('1 - before');
+
+const p = new Promise((resolve) => {
+  console.log('2 - executor runs sync'); // runs right now
+  resolve('value');
+  console.log('3 - after resolve');      // still runs
+});
+
+p.then(v => console.log('5 - then:', v)); // scheduled as microtask
+
+console.log('4 - after new Promise');
+
+// Output: 1 → 2 → 3 → 4 → 5
+```
+
+**Internally:**
+1. `new Promise(executor)` — executor runs synchronously, creating the promise object
+2. `resolve(value)` — marks the promise as fulfilled, queues `.then` callbacks as microtasks
+3. `.then(fn)` — if promise is already settled, `fn` is queued immediately as a microtask; if pending, `fn` is stored to be queued when settled
+4. Microtasks run after the current synchronous block finishes
+
+> **Key insight:** The executor is sync, but the callbacks are always async (microtasks). A `.then()` callback never runs synchronously, even on an already-resolved promise.
+
+</details>
+
+---
+
+<details>
+<summary><strong>20. What is Promise Flattening (Promise Resolution Procedure)?</strong></summary>
+
+When a `.then()` callback returns a **thenable** (anything with a `.then` method), the Promise engine doesn't wrap it as a value — it **adopts its state** instead. This is the Promise Resolution Procedure (PRP), defined in the spec.
+
+```js
+// Returning a plain value — wraps it
+Promise.resolve(1)
+  .then(() => 42)
+  .then(v => console.log(v)); // 42
+
+// Returning a Promise — flattened (not nested)
+Promise.resolve(1)
+  .then(() => Promise.resolve(42))
+  .then(v => console.log(v)); // 42 — NOT Promise<42>
+
+// Nested promises are automatically unwrapped
+Promise.resolve(
+  Promise.resolve(
+    Promise.resolve('deep')
+  )
+).then(v => console.log(v)); // 'deep' — fully flattened
+```
+
+**Why it matters:** Without flattening, chaining async operations would produce `Promise<Promise<Promise<value>>>`. Flattening keeps chains flat and composable.
+
+**Thenable duck-typing:** Any object with a `.then` method is treated as a promise-like, not just native Promises — this enables interoperability between different promise libraries.
+
+```js
+// Custom thenable
+const thenable = {
+  then(resolve) { resolve(100); }
+};
+Promise.resolve(thenable).then(v => console.log(v)); // 100
+```
+
+</details>
+
+---
+
+<details>
+<summary><strong>21. What is the difference between returning a value and returning a Promise from <code>.then()</code>?</strong></summary>
+
+```js
+// Returning a plain value — next .then() runs in the next microtask tick
+Promise.resolve()
+  .then(() => 42)           // wraps 42 in a resolved promise
+  .then(v => console.log(v)); // 42
+
+// Returning a Promise — chain WAITS for that promise to settle
+Promise.resolve()
+  .then(() => new Promise(resolve => setTimeout(() => resolve(42), 1000)))
+  .then(v => console.log(v)); // 42 — but after 1 second
+```
+
+| | Return a value | Return a Promise |
+|--|---------------|-----------------|
+| **Next `.then()` timing** | Next microtask tick | When the returned promise settles |
+| **Chain behavior** | Passes value through | Waits, then unwraps |
+| **Use case** | Transform data | Trigger another async operation |
+
+**Practical implication:** This is what makes async chaining work cleanly — each step can optionally hand off to another async operation and the chain waits automatically.
+
+```js
+fetch('/api/user')
+  .then(res => res.json())              // returns Promise — chain waits
+  .then(user => user.name.toUpperCase()) // returns value — instant
+  .then(name => console.log(name));
+```
+
+</details>
+
+---
+
+<details>
+<summary><strong>22. Can a Promise be settled more than once?</strong></summary>
+
+**No.** Once a Promise is settled (fulfilled or rejected), calling `resolve` or `reject` again is silently ignored. The state transition is one-way and permanent.
+
+```js
+const p = new Promise((resolve, reject) => {
+  resolve('first');
+  resolve('second'); // ignored
+  reject('error');   // ignored
+});
+
+p.then(v => console.log(v)); // 'first' — only the first resolve counts
+```
+
+**Why this matters:**
+- Guarantees predictability — a promise always delivers the same value
+- Safe to pass a promise to multiple consumers (each gets the same result)
+- Avoids race conditions where both resolve and reject might be called
+
+```js
+// Common gotcha — async code calling resolve twice
+function fetchWithFallback(url) {
+  return new Promise((resolve, reject) => {
+    fetch(url)
+      .then(res => resolve(res))
+      .catch(() => {
+        resolve(fallbackData); // safe — if fetch already resolved, this is ignored
+      });
+  });
+}
+```
+
+</details>
+
+---
+
+<details>
+<summary><strong>23. How do <code>Promise.resolve()</code> and <code>Promise.reject()</code> work?</strong></summary>
+
+**`Promise.resolve(value)`** — creates an already-fulfilled promise, with special handling for thenables:
+
+```js
+// Plain value — wraps in a fulfilled promise
+Promise.resolve(42).then(v => console.log(v)); // 42
+
+// Existing Promise — returns it AS-IS (no wrapping)
+const p = Promise.resolve(42);
+Promise.resolve(p) === p; // true — same reference
+
+// Thenable — adopts its eventual value
+Promise.resolve({ then: resolve => resolve(99) })
+  .then(v => console.log(v)); // 99
+```
+
+**`Promise.reject(reason)`** — always wraps in a rejected promise, even if passed a Promise:
+
+```js
+// Always rejects — even if passed a Promise
+const p = Promise.resolve(42);
+Promise.reject(p).catch(v => console.log(v)); // logs the Promise object, not 42
+
+// Common use — create a pre-rejected promise for testing or short-circuit
+function mustBeLoggedIn() {
+  if (!user) return Promise.reject(new Error('Not authenticated'));
+  return fetchUserData();
+}
+```
+
+> **Key difference:** `Promise.resolve` is "smart" about thenables and existing promises. `Promise.reject` is dumb — it always rejects with exactly what you pass it.
+
+</details>
+
+---
+
+<details>
+<summary><strong>24. How do you create your own Promise-based APIs?</strong></summary>
+
+Wrap callback-based or event-based APIs in `new Promise()` — exposing a clean promise interface to consumers.
+
+```js
+// 1. Promisify a callback-based API
+function readFile(path) {
+  return new Promise((resolve, reject) => {
+    fs.readFile(path, 'utf8', (err, data) => {
+      if (err) reject(err);
+      else resolve(data);
+    });
+  });
+}
+
+// 2. Promisify a timeout
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+await delay(1000); // pause for 1 second
+
+// 3. Promisify DOM events
+function waitForClick(element) {
+  return new Promise(resolve => {
+    element.addEventListener('click', resolve, { once: true });
+  });
+}
+await waitForClick(button);
+console.log('Button was clicked!');
+
+// 4. Cancellable promise with AbortController
+function fetchWithAbort(url, signal) {
+  return new Promise((resolve, reject) => {
+    signal.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
+    fetch(url).then(resolve).catch(reject);
+  });
+}
+```
+
+**Best practices:**
+- Always handle both the success and error paths
+- Avoid the "explicit promise construction antipattern" — if a function already returns a promise, don't wrap it again
+- Use `{ once: true }` for event listeners to avoid memory leaks
+
+```js
+// ❌ Antipattern — unnecessary wrapping
+function getData() {
+  return new Promise((resolve, reject) => {
+    fetch('/api').then(resolve).catch(reject); // just return fetch() directly
+  });
+}
+
+// ✅
+function getData() {
+  return fetch('/api');
+}
+```
+
+</details>
+
+---
+
 ## Async/Await
 
 <details>
-<summary><strong>20. What is <code>async/await</code> and what problems does it solve?</strong></summary>
+<summary><strong>25. What is <code>async/await</code> and what problems does it solve?</strong></summary>
 
 `async/await` is syntactic sugar over Promises, making async code read and reason about like synchronous code.
 
@@ -495,7 +740,7 @@ async function loadData() {
 ---
 
 <details>
-<summary><strong>21. What happens internally when JavaScript encounters an <code>await</code> statement?</strong></summary>
+<summary><strong>26. What happens internally when JavaScript encounters an <code>await</code> statement?</strong></summary>
 
 1. The `async` function pauses at `await`
 2. The Promise being awaited is registered
@@ -523,7 +768,130 @@ console.log('D');
 ---
 
 <details>
-<summary><strong>23. How is error handling done with <code>async/await</code>?</strong></summary>
+<summary><strong>27. Why can <code>await</code> only be used inside an <code>async</code> function?</strong></summary>
+
+`await` works by **suspending the current function** and resuming it later as a microtask. This requires the function to be transformed into a state machine by the JS engine — which only happens when a function is marked `async`.
+
+A regular function has no mechanism to pause mid-execution and resume. The `async` keyword opts the function into this transformation.
+
+```js
+// ❌ SyntaxError — await outside async function
+function getData() {
+  const data = await fetch('/api'); // SyntaxError
+}
+
+// ✅
+async function getData() {
+  const data = await fetch('/api'); // valid
+}
+
+// Top-level await — allowed in ES modules (.mjs or type="module")
+// (the module itself is treated as an async context)
+const data = await fetch('/api'); // valid at top level in a module
+```
+
+**Under the hood:** The JS engine rewrites `async` functions as generator-like state machines. Each `await` is a yield point. Without `async`, there's no state machine, so `await` has nowhere to pause.
+
+> **Interview note:** Top-level `await` is valid in ES modules (supported in modern browsers and Node.js v14.8+), which is why you can use `await` at the top level in a `.mjs` file.
+
+</details>
+
+---
+
+<details>
+<summary><strong>28. What happens when you <code>await</code> a non-Promise value?</strong></summary>
+
+The value is **implicitly wrapped** in `Promise.resolve()` first. It still causes a microtask tick — the code after `await` is always async, even for non-promises.
+
+```js
+async function example() {
+  console.log('A');
+  const x = await 42; // same as await Promise.resolve(42)
+  console.log('B', x);
+}
+
+example();
+console.log('C');
+
+// Output: A → C → B 42
+// Even though 42 isn't async, the microtask tick still defers 'B'
+```
+
+**Practical implication:**
+
+```js
+// These are equivalent:
+const a = await 42;
+const b = await Promise.resolve(42);
+
+// Both defer the continuation to a microtask
+// Both produce the same value
+```
+
+> **Why it matters:** You can safely `await` a value that *might* be a Promise or might be a plain value — `await` handles both cases correctly. This is useful when a function sometimes returns a promise and sometimes a cached plain value.
+
+```js
+async function getUser(id) {
+  const cached = cache.get(id);
+  return await cached ?? fetchUser(id); // works whether cached is a value or promise
+}
+```
+
+</details>
+
+---
+
+<details>
+<summary><strong>29. Does <code>await</code> block JavaScript execution?</strong></summary>
+
+**No.** `await` only pauses the current `async` function — it does not block the call stack or the event loop. Other code continues to run while the awaited promise is pending.
+
+```js
+async function slowTask() {
+  console.log('slow: start');
+  await delay(2000); // pauses slowTask, not the whole program
+  console.log('slow: done');
+}
+
+async function fastTask() {
+  console.log('fast: start');
+  await delay(100);
+  console.log('fast: done');
+}
+
+slowTask();
+fastTask();
+
+// Output:
+// slow: start
+// fast: start
+// fast: done   (after ~100ms)
+// slow: done   (after ~2000ms)
+```
+
+**Contrast with truly blocking code:**
+
+```js
+// ❌ This DOES block — synchronous busy-wait
+function blockingDelay(ms) {
+  const end = Date.now() + ms;
+  while (Date.now() < end) {} // freezes the entire thread
+}
+
+// ✅ This does NOT block — async suspension
+async function asyncDelay(ms) {
+  await new Promise(resolve => setTimeout(resolve, ms));
+}
+```
+
+> `await` is cooperative multitasking — the function voluntarily yields control and is resumed later. The thread is free for other work in between.
+
+</details>
+
+---
+
+<details>
+<summary><strong>30. How is error handling done with <code>async/await</code>?</strong></summary>
 
 ```js
 // 1. try/catch — most common
@@ -560,7 +928,98 @@ if (err) handleError(err);
 ---
 
 <details>
-<summary><strong>24. What are common mistakes developers make with <code>async/await</code>?</strong></summary>
+<summary><strong>31. Sequential vs Parallel execution using async/await.</strong></summary>
+
+**Sequential** — each `await` waits for the previous to finish before starting the next. Total time = sum of all durations.
+
+```js
+async function sequential() {
+  const user    = await fetchUser();    // wait ~200ms
+  const orders  = await fetchOrders();  // wait ~300ms after user finishes
+  const reviews = await fetchReviews(); // wait ~100ms after orders finishes
+  // Total: ~600ms
+}
+```
+
+**Parallel** — fire all requests simultaneously, then collect results. Total time = slowest operation.
+
+```js
+async function parallel() {
+  const [user, orders, reviews] = await Promise.all([
+    fetchUser(),    // ~200ms ┐
+    fetchOrders(),  // ~300ms ├ all running at the same time
+    fetchReviews(), // ~100ms ┘
+  ]);
+  // Total: ~300ms (the slowest one)
+}
+```
+
+**Start parallel, await individually** — fires requests simultaneously but accesses results in order:
+
+```js
+async function startAll() {
+  const pUser    = fetchUser();    // fires immediately
+  const pOrders  = fetchOrders();  // fires immediately
+  const pReviews = fetchReviews(); // fires immediately
+
+  const user    = await pUser;    // waits for user
+  const orders  = await pOrders;  // likely already done
+  const reviews = await pReviews; // likely already done
+}
+```
+
+> **Interview note:** The most impactful async performance win is usually switching sequential `await` chains to `Promise.all` for independent operations. Always ask: "do these operations depend on each other's results?" If not, run them in parallel.
+
+</details>
+
+---
+
+<details>
+<summary><strong>32. What is the difference between <code>.then()</code> and <code>await</code>?</strong></summary>
+
+Both consume Promises, but differ in style, error handling, and composability.
+
+| | `.then()` | `await` |
+|--|----------|---------|
+| **Style** | Functional/chainable | Imperative, reads like sync |
+| **Error handling** | `.catch()` at end of chain | `try/catch` block |
+| **Scope** | Each callback is its own closure | All in one function scope |
+| **Requirement** | Works anywhere | Must be inside `async` function |
+| **Conditional logic** | Awkward with if/else | Natural |
+| **Debugging** | Stack traces can be unclear | Better stack traces |
+
+```js
+// .then() — great for simple linear chains
+fetch('/api/user')
+  .then(res => res.json())
+  .then(user => processUser(user))
+  .catch(handleError);
+
+// await — better for complex logic, conditionals, loops
+async function loadUser() {
+  try {
+    const res  = await fetch('/api/user');
+    const user = await res.json();
+
+    if (user.isPremium) {
+      const perks = await fetchPerks(user.id); // conditional async
+      return { ...user, perks };
+    }
+    return user;
+  } catch (err) {
+    handleError(err);
+  }
+}
+```
+
+**They're equivalent under the hood** — `await` compiles down to `.then()`. Choose based on readability: simple chains → `.then()`, complex logic/conditionals/loops → `async/await`.
+
+</details>
+
+---
+
+<details>
+<summary><strong>33. What are common mistakes developers make with <code>async/await</code>?</strong></summary>
 
 **1. Sequential awaits when parallel is possible**
 ```js
@@ -609,7 +1068,7 @@ main().catch(console.error);
 ## Advanced Async Patterns
 
 <details>
-<summary><strong>25 & 26. How can multiple async operations run in parallel? Sequential vs Parallel?</strong></summary>
+<summary><strong>34 & 35. How can multiple async operations run in parallel? Sequential vs Parallel?</strong></summary>
 
 ```js
 // Sequential — total time = sum of all durations
@@ -641,7 +1100,7 @@ async function startAll() {
 ---
 
 <details>
-<summary><strong>28 & 29. What are race conditions and how does <code>AbortController</code> help?</strong></summary>
+<summary><strong>36 & 37. What are race conditions and how does <code>AbortController</code> help?</strong></summary>
 
 **Race condition:** Two async operations complete in an unpredictable order, causing stale data to overwrite fresh data.
 
@@ -674,7 +1133,7 @@ searchInput.addEventListener('input', async e => {
 ---
 
 <details>
-<summary><strong>30. How would you limit concurrent API requests in a frontend application?</strong></summary>
+<summary><strong>38. How would you limit concurrent API requests in a frontend application?</strong></summary>
 
 ```js
 // Process at most `limit` requests concurrently
@@ -721,16 +1180,30 @@ Event Loop order per tick:
 Microtasks: Promise.then/catch/finally, queueMicrotask, MutationObserver
 Macrotasks: setTimeout, setInterval, setImmediate, I/O, click events
 
+Promise states: pending → fulfilled | rejected (immutable once settled)
+
+Promise internals:
+  - Executor runs synchronously
+  - .then() callbacks always run as microtasks (never sync)
+  - Returning a Promise from .then() flattens the chain (PRP)
+
 Promise combinators:
   all()        → all fulfill or first reject
   allSettled() → wait for all, never rejects
   race()       → first to settle (any outcome)
   any()        → first to fulfill or all rejected
 
+async/await:
+  - async fn always returns a Promise
+  - await wraps non-Promise values in Promise.resolve()
+  - await suspends the function, not the thread
+  - Top-level await valid in ES modules
+
 async/await common mistakes:
   - Sequential awaits for independent requests (use Promise.all)
   - await inside forEach (use for...of or Promise.all+map)
   - Missing error handling (always .catch or try/catch)
+  - Forgetting await (function returns Promise instead of value)
 ```
 
 ---
