@@ -736,12 +736,12 @@ console.log(new Person('Dave').count);
 <summary>Show Output & Explanation</summary>
 
 ```
-4
+3
 undefined
 ```
 
 **Explanation:**  
-`Person.count` is a property on the **constructor function** itself, not on instances. After 4 `new Person(...)` calls (including `'Dave'`), `Person.count = 4`. But `new Person('Dave').count` looks for `count` on the instance — it's not there (own property check) and not on `Person.prototype` (only on `Person` the function) → `undefined`.
+`Person.count` is a property on the **constructor function** itself, not on instances. The first `console.log(Person.count)` runs after 3 `new Person(...)` calls (Alice, Bob, Carol), so `Person.count = 3`. The `new Person('Dave')` only runs inside the second `console.log` expression — after the first log has already printed. `new Person('Dave').count` looks for `count` on the instance — it's not there (own property check) and not on `Person.prototype` (only on `Person` the function) → `undefined`.
 
 </details>
 

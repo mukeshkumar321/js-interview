@@ -195,7 +195,7 @@ greet(null);
 Alice — admin
 Bob — user
 Guest — user
-TypeError: Cannot destructure property 'name' of null
+TypeError: Cannot read properties of null (reading 'name')
 ```
 
 **Explanation:**  

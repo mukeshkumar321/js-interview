@@ -349,7 +349,10 @@ const fn = () => console.log(arguments); // ❌ ReferenceError (or outer scope's
 
 **4. Can't be used as generator functions**
 ```js
-const gen = *() => {}; // ❌ SyntaxError
+// Arrow functions cannot be generators
+const gen = function* () {}; // ✅ regular function CAN be a generator
+const arrow = () => {};      // arrow — NOT a generator, no `function*` syntax allowed
+// const gen = *() => {};    // ❌ SyntaxError — invalid syntax
 ```
 
 **5. No `prototype` property**

@@ -253,7 +253,8 @@ false + 1     // 1     — false → 0
 null + 1      // 1     — null → 0
 undefined + 1 // NaN   — undefined → NaN
 [] + {}       // '[object Object]'
-{} + []       // 0     (tricky — {} parsed as block, +[] = 0)
+{} + []       // 0     (tricky — as a standalone statement, {} is parsed as a block, then +[] = 0)
+              // BUT: console.log({} + []) → '[object Object]' (in expression context, {} is an object literal)
 ```
 
 **Explicit coercion** — you convert intentionally:

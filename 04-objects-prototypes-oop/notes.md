@@ -160,7 +160,7 @@ const deep = structuredClone(original); // ✅ handles most types, no functions
 | `Object.assign({}, obj)` | Shallow | Yes | By ref | No |
 | `{ ...obj }` | Shallow | Yes | By ref | No |
 | `JSON.parse(JSON.stringify)` | Deep | ❌ Lost | ❌ String | ❌ Error |
-| `structuredClone()` | Deep | ❌ Error | ✅ | ✅ |
+| `structuredClone()` | Deep | ❌ Omitted (silently) | ✅ | ✅ |
 | Custom recursive | Deep | ✅ | ✅ | With care |
 | Lodash `_.cloneDeep` | Deep | ✅ | ✅ | ✅ |
 
@@ -542,7 +542,7 @@ Object.getPrototypeOf(Animal.prototype); // Object.prototype
 ```
 
 **Real differences from constructor functions:**
-- Classes are NOT hoisted (unlike function declarations)
+- Class declarations are in the TDZ — hoisted but cannot be used before their declaration line (unlike function declarations which are fully hoisted)
 - Class bodies always run in strict mode
 - Methods are non-enumerable by default
 - Must be called with `new` (throws otherwise)

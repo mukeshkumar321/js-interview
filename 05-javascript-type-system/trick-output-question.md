@@ -644,7 +644,7 @@ console.log(+{});
 ```
 ""
 [object Object]
-0
+[object Object]
 0
 NaN
 ```
@@ -652,11 +652,11 @@ NaN
 **Explanation:**  
 - `[] + []` → `'' + ''` → `''`
 - `[] + {}` → `'' + '[object Object]'` → `'[object Object]'`
-- `{} + []` → `{}` parsed as **empty block** (not object), then `+[]` = `+''` = `0`
+- `console.log({} + [])` → inside a function call, `{}` is in **expression context** and is parsed as an **object literal**, not an empty block. So `{} + []` → `'[object Object]' + ''` → `'[object Object]'`
 - `+[]` → `+''` → `0`
 - `+{}` → `+'[object Object]'` → `NaN`
 
-> **Classic JS trick question.** The `{}` at the start of a statement is parsed as a block, not an object literal.
+> **Classic JS trick question.** `{}` at the **start of a statement** is parsed as a block (so `{} + []` as a standalone statement = `0`), but inside `console.log(...)` it is in expression context and parsed as an object literal → `'[object Object]'`.
 
 </details>
 

@@ -123,7 +123,7 @@ sessionStorage.clear();
 
 ```js
 // Setting cookies via JavaScript
-document.cookie = 'name=Alice; expires=Fri, 31 Dec 2025 23:59:59 GMT; path=/';
+document.cookie = 'name=Alice; expires=Fri, 31 Dec 2027 23:59:59 GMT; path=/';
 document.cookie = 'theme=dark; max-age=31536000; SameSite=Lax';
 
 // Reading cookies (returns all as one string)

@@ -108,10 +108,10 @@ function setup() {
 
 // 3. Stored in an object
 function makeObj() {
-  let private = 0;
+  let _count = 0;
   return {
-    get: () => private,
-    set: (v) => { private = v; }
+    get: () => _count,
+    set: (v) => { _count = v; }
   };
 }
 ```

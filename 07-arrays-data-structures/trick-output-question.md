@@ -345,10 +345,9 @@ arr.forEach((item, index, array) => {
 1
 2
 3
-4
 ```
 
-`forEach` dynamically reads the array length on each iteration. Element `4` pushed during iteration at index 0 gets visited when the loop reaches index 3. This can cause unexpected behavior — avoid mutating the array inside `forEach`.
+Per the ECMAScript spec, `forEach` captures the array's length **before** iteration begins. Element `4` is pushed during the iteration at index 0, but since the original length was `3`, `forEach` only visits indices 0, 1, and 2. Elements added beyond the initial length are never visited. Avoid mutating the array inside `forEach`.
 
 </details>
 
@@ -567,10 +566,10 @@ console.log(obj['constructor'] === Object);
 ```
 'safe'
 2
-true
+false
 ```
 
-`Map` safely stores any string as a key including `'constructor'` and `'__proto__'`. Plain objects inherit from `Object.prototype`, so `obj['constructor']` still resolves to `Object` (the prototype property shadows the assignment). `Map` is safer for dynamic/arbitrary keys.
+`Map` safely stores any string as a key including `'constructor'` and `'__proto__'`. With the plain object, `obj['constructor'] = 'unsafe?'` creates an **own property** named `'constructor'` that **shadows** `Object.prototype.constructor`. So `obj['constructor']` now returns the string `'unsafe?'`, not the `Object` function — making `obj['constructor'] === Object` → `false`. `Map` is safer for dynamic/arbitrary keys.
 
 </details>
 

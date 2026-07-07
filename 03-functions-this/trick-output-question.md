@@ -178,12 +178,12 @@ fn();
 
 ```
 Alice
-undefined
+
 ```
 
 **Explanation:**  
 - `obj.greet()` — implicit binding: `this = obj` → `'Alice'`
-- `const fn = obj.greet; fn()` — the method is detached. Default binding applies: `this = window` (or `undefined` in strict mode). `window.name` is `''` (or `undefined` in strict), not `'Alice'`.
+- `const fn = obj.greet; fn()` — the method is detached. Default binding applies: `this = window` (or `undefined` in strict mode). In browsers, `window.name` defaults to `''` (empty string), not `'Alice'`. In strict mode, `this` is `undefined` and accessing `this.name` throws a `TypeError`.
 
 > **Most common real-world `this` bug.** Always `bind` methods before passing them as callbacks.
 
@@ -576,12 +576,12 @@ obj.printFriends();
 <summary>Show Output & Explanation</summary>
 
 ```
-undefined knows Bob
-undefined knows Carol
+ knows Bob
+ knows Carol
 ```
 
 **Explanation:**  
-The callback passed to `forEach` is a regular function — it has its own `this`. Since it's called without an object (default binding), `this = window` (or `undefined` strict). `window.name` is `undefined` (or `''` in browsers).
+The callback passed to `forEach` is a regular function — it has its own `this`. Since it's called without an object (default binding), `this = window` in non-strict mode. In browsers, `window.name` defaults to `''` (empty string), so the output is `' knows Bob'` and `' knows Carol'`. In strict mode, `this` is `undefined` and accessing `this.name` would throw a `TypeError`.
 
 **Fix:**
 ```js

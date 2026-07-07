@@ -521,7 +521,7 @@ window.addEventListener('load', () => {
 
 **Best practice:** Use `DOMContentLoaded` for DOM manipulation (faster). Use `load` only when you specifically need images/external resources to be ready.
 
-> **Interview Note:** Scripts with `defer` attribute run after `DOMContentLoaded`. Scripts with `async` run as soon as they download. `defer` is the modern preferred approach for non-critical scripts.
+> **Interview Note:** Scripts with `defer` attribute run **before** `DOMContentLoaded` fires (after HTML parsing completes, but before the event). `DOMContentLoaded` only fires after all deferred scripts have executed. Scripts with `async` run as soon as they download, in no guaranteed order. `defer` is the modern preferred approach for non-critical scripts.
 
 </details>
 
