@@ -330,8 +330,9 @@ console.log(items.length); // after adding
 <summary>Show Output & Explanation</summary>
 
 ```
-[initial count]
-[same initial count]
+// Assume 2 items exist initially:
+2
+2
 ```
 
 `querySelectorAll` returns a **static NodeList** — a snapshot taken at call time. Adding new matching elements to the DOM does NOT update it. By contrast, `getElementsByClassName` returns a **live HTMLCollection** that updates automatically.
@@ -361,7 +362,7 @@ console.log(w1, h1);
 100 100
 ```
 
-The code works, but this pattern causes **layout thrashing** — alternating reads and writes force the browser to recalculate layout multiple times. The fix: batch all reads, then all writes. Actual values depend on the element, but the thrashing pattern is the key interview point.
+The code outputs `100 100` — it works, but this pattern causes **layout thrashing**. Each read after a write forces the browser to recalculate layout synchronously. The fix: batch all reads first, then all writes. The output values are correct, but the performance cost is the key interview point.
 
 </details>
 
@@ -685,9 +686,7 @@ received: hello from custom event
 
 ---
 
----
-
-**Q25. What is the output?**
+### Q25. `requestAnimationFrame` execution order
 
 ```js
 console.log('1');
@@ -722,7 +721,7 @@ console.log('1 end');
 
 ---
 
-**Q26. What is the output?**
+### Q26. `requestAnimationFrame` animation loop
 
 ```js
 let rafId;
@@ -758,7 +757,7 @@ frame 3
 
 ---
 
-**Q27. What is the output?**
+### Q27. `fetch` — async execution and `res.ok`
 
 ```js
 console.log('start');
@@ -793,7 +792,7 @@ data received
 
 ---
 
-**Q28. What is the output?**
+### Q28. History API — `pushState` and `popstate`
 
 ```js
 console.log('initial:', location.pathname);

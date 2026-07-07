@@ -9,6 +9,7 @@
 - [Functions Fundamentals](#functions-fundamentals)
 - [The `this` Keyword](#the-this-keyword)
 - [call, apply & bind](#call-apply--bind)
+- [Generator Functions](#generator-functions)
 
 ---
 
@@ -811,6 +812,121 @@ this.handleSubmit = this.handleSubmit.bind(this);
 ```
 
 > **Interview Note:** `apply` with `Math.max` is a classic question. The modern answer is spread (`...`), but knowing the `apply` version demonstrates deep JS knowledge.
+
+</details>
+
+---
+
+## Generator Functions
+
+<details>
+<summary><strong>23. What is a Generator Function?</strong></summary>
+
+A generator is a special function that can **pause** its execution and **resume** later. Unlike regular functions that run to completion, generators use `yield` to pause and hand a value back to the caller.
+
+```js
+function* counter() {
+  yield 1;
+  yield 2;
+  yield 3;
+}
+
+const gen = counter();
+console.log(gen.next()); // { value: 1, done: false }
+console.log(gen.next()); // { value: 2, done: false }
+console.log(gen.next()); // { value: 3, done: false }
+console.log(gen.next()); // { value: undefined, done: true }
+```
+
+**Key rules:**
+- `function*` declares a generator (the `*` is the marker)
+- Calling `counter()` does NOT run the code — it returns an **iterator**
+- Each `.next()` call runs until the next `yield`, pauses, and returns `{ value, done }`
+- `done: true` means the generator is exhausted
+
+</details>
+
+---
+
+<details>
+<summary><strong>24. How does lazy execution work in generators?</strong></summary>
+
+Code inside a generator only runs when you call `.next()`:
+
+```js
+function* lazy() {
+  console.log('step 1');
+  yield 'a';
+  console.log('step 2');
+  yield 'b';
+}
+
+const it = lazy();
+// Nothing logged yet
+it.next(); // logs "step 1", returns { value: 'a', done: false }
+it.next(); // logs "step 2", returns { value: 'b', done: false }
+```
+
+> **Common Mistake:** Assuming the generator body runs on creation. `lazy()` just creates the iterator — execution only starts on the first `.next()`.
+
+</details>
+
+---
+
+<details>
+<summary><strong>25. How do you pass values back into a generator?</strong></summary>
+
+Send a value into a running generator via `.next(value)` — it becomes the result of the current `yield` expression:
+
+```js
+function* adder() {
+  const x = yield 'give me x';
+  const y = yield 'give me y';
+  return x + y;
+}
+
+const it = adder();
+it.next();          // { value: 'give me x', done: false }
+it.next(10);        // { value: 'give me y', done: false } — 10 becomes x
+it.next(20);        // { value: 30, done: true } — 20 becomes y
+```
+
+> **Note:** The value passed to the **first** `.next()` is ignored — no `yield` has run yet to receive it.
+
+</details>
+
+---
+
+<details>
+<summary><strong>26. How do generators work with for...of and spread?</strong></summary>
+
+Generators implement the iterator protocol, so `for...of` and spread work naturally:
+
+```js
+function* range(start, end) {
+  for (let i = start; i <= end; i++) yield i;
+}
+
+console.log([...range(1, 5)]); // [1, 2, 3, 4, 5]
+
+for (const n of range(1, 3)) {
+  console.log(n); // 1, 2, 3
+}
+```
+
+> **Common pitfall:** A generator iterator is single-use. Spread the function call (`...range(1, 5)`), not a stored iterator variable.
+
+</details>
+
+---
+
+<details>
+<summary><strong>27. When should you use generators?</strong></summary>
+
+- **Lazy sequences** — generate values on demand instead of building a full array
+- **Infinite sequences** — generate IDs, timestamps, etc. without pre-allocating
+- **Custom iterables** — make your own objects work with `for...of`
+- **Async generators** (`async function*`) — process streams of async data (covered in Ch. 8)
 
 </details>
 

@@ -11,6 +11,9 @@
 - [Promises](#promises)
 - [Async/Await](#asyncawait)
 - [Advanced Async Patterns](#advanced-async-patterns)
+- [Async Generators and for await...of](#async-generators-and-for-awaitof)
+- [requestIdleCallback](#requestidlecallback--schedule-low-priority-work)
+- [Web Workers](#web-workers--true-parallelism-in-javascript)
 
 ---
 
@@ -1165,6 +1168,98 @@ const results = await pLimit(tasks, 3);
 **Why it matters:** Sending 100 requests simultaneously can overwhelm the server or hit browser connection limits (typically 6 per domain). Concurrency limiting gives you control over load.
 
 </details>
+
+---
+
+## Async Generators and for await...of
+
+### async function*
+
+An async generator can both `await` (for async operations) and `yield` (to lazily emit values):
+
+```js
+async function* fetchPages(urls) {
+  for (const url of urls) {
+    const res = await fetch(url);   // wait for each request
+    const data = await res.json();
+    yield data;                      // emit one page at a time
+  }
+}
+
+// Consume with for await...of
+for await (const page of fetchPages(['/api/1', '/api/2'])) {
+  console.log(page);
+}
+```
+
+**When to use:** Processing streams of data — API pagination, reading files in chunks, real-time event streams.
+
+**Key difference from regular async/await:** Regular async functions return one final value. Async generators emit multiple values over time, lazily.
+
+---
+
+## requestIdleCallback — Schedule Low-Priority Work
+
+`requestIdleCallback` runs your function when the browser is idle — after all urgent tasks are done and before the next frame (if time allows).
+
+```js
+requestIdleCallback((deadline) => {
+  while (deadline.timeRemaining() > 0) {
+    // do a chunk of non-urgent work
+    processNextItem();
+  }
+});
+```
+
+**Execution order:**
+```
+Sync code → Microtasks → Macrotasks (setTimeout) → rAF → Paint → Idle callbacks
+```
+
+**Use for:** Analytics, pre-fetching, cache warming — work that shouldn't delay user interactions.
+
+**Not for:** Anything the user is waiting for. If the browser is consistently busy, idle callbacks may be delayed indefinitely. Use `timeout` option as a fallback:
+
+```js
+requestIdleCallback(myTask, { timeout: 2000 }); // force-run after 2s max
+```
+
+---
+
+## Web Workers — True Parallelism in JavaScript
+
+JavaScript is single-threaded. Heavy computation blocks the UI. Web Workers let you run code in a **separate background thread**.
+
+```js
+// main.js
+const worker = new Worker('worker.js');
+
+worker.postMessage({ numbers: [1, 2, 3, 4, 5] });
+
+worker.onmessage = (e) => {
+  console.log('Sum:', e.data.result);
+};
+
+// worker.js
+self.onmessage = (e) => {
+  const sum = e.data.numbers.reduce((a, b) => a + b, 0);
+  self.postMessage({ result: sum });
+};
+```
+
+**Key rules:**
+- Workers run in a completely separate scope — no access to `window`, `document`, or DOM
+- Communication is via `postMessage` / `onmessage` (async, message-based)
+- Data is **copied** (structured clone), not shared — no shared memory by default
+- Use `SharedArrayBuffer` + `Atomics` for shared memory (advanced)
+
+**When to use Workers:**
+- Image/video processing
+- Large data sorting or filtering
+- Complex math / simulations
+- Any task that takes >50ms and would freeze the UI
+
+**When NOT to use:** Simple async operations (use Promises/async-await instead). Workers have overhead — thread spawn + message serialization.
 
 ---
 

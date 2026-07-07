@@ -416,6 +416,45 @@ typeof value === 'object' && value !== null // ✅ object but not null
 
 ---
 
+---
+
+## Floating Point Precision
+
+### Why 0.1 + 0.2 !== 0.3
+
+JavaScript uses **IEEE 754 double-precision** floating point. Most decimal fractions (0.1, 0.2, 0.3) cannot be represented exactly in binary — they're stored as approximations.
+
+```js
+console.log(0.1 + 0.2);         // 0.30000000000000004
+console.log(0.1 + 0.2 === 0.3); // false
+```
+
+### The Fix: Number.EPSILON
+
+`Number.EPSILON` is the smallest difference between two representable doubles (~2.22e-16). Use it for float comparisons:
+
+```js
+function approximately(a, b) {
+  return Math.abs(a - b) < Number.EPSILON;
+}
+
+approximately(0.1 + 0.2, 0.3); // true
+```
+
+### Practical Fixes
+
+```js
+// For display
+(0.1 + 0.2).toFixed(2);        // "0.30"
+
+// For money — use integers (cents, not dollars)
+const price = 199; // $1.99 stored as 199 cents
+```
+
+> **Interview tip:** "Never use floating point for money calculations. Store amounts as integers (cents) or use a library like decimal.js."
+
+---
+
 <details>
 <summary><strong>13. What is <code>NaN</code> and why is <code>NaN !== NaN</code>?</strong></summary>
 
@@ -690,6 +729,26 @@ null == false // false — null only == undefined
 ```js
 parseInt('10px') // 10 — not NaN
 parseInt('px10') // NaN
+```
+
+### parseInt Gotchas
+
+```js
+// Always pass a radix
+parseInt('08');        // 8 (modern) — always specify radix to be safe
+parseInt('08', 10);    // 8 (explicit decimal)
+parseInt('0x10');      // 16 (auto hex detection)
+parseInt('10', 2);     // 2 (binary)
+parseInt('3.9');       // 3 (truncates, doesn't round)
+
+// Classic trap — never pass parseInt directly to .map()
+['1', '2', '3'].map(parseInt);
+// Calls: parseInt('1', 0), parseInt('2', 1), parseInt('3', 2)
+// Returns: [1, NaN, NaN]
+
+// Fix:
+['1', '2', '3'].map(Number);  // [1, 2, 3]
+['1', '2', '3'].map(n => parseInt(n, 10)); // [1, 2, 3]
 ```
 
 **Bug 5: Array/object coercion in arithmetic**

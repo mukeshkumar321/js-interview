@@ -606,9 +606,7 @@ The `storage` event fires in **all other tabs** of the same origin when `localSt
 
 ---
 
----
-
-**Q25. What is the output?**
+### Q25. Service Worker — install and cache-first fetch
 
 ```js
 // In a Service Worker
@@ -648,7 +646,7 @@ The Service Worker `install` event caches assets. `event.waitUntil` keeps the SW
 
 ---
 
-**Q26. What is the output?**
+### Q26. Service Worker — cleaning up old caches on activate
 
 ```js
 const CACHE_NAME = 'app-v2';
@@ -686,7 +684,7 @@ When deploying a new Service Worker version, the `activate` event is used to cle
 
 ---
 
-**Q27. What is the output?**
+### Q27. `navigator.storage.estimate()` — checking quota
 
 ```js
 (async () => {

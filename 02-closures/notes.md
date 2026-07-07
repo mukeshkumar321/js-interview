@@ -390,7 +390,7 @@ validateScore(150); // "Must be at most 100"
 <details>
 <summary><strong>11. How does Garbage Collection work with Closures?</strong></summary>
 
-JavaScript uses **mark-and-sweep** garbage collection. An object is collected when no references to it remain reachable from the root (global scope, active call stack).
+**Garbage collection (GC)** is the engine's automatic process of finding and freeing memory that's no longer used by the program. JavaScript uses a **mark-and-sweep** strategy: the engine periodically marks everything reachable from the root (global scope, active call stack) and sweeps away (frees) anything it couldn't reach.
 
 With closures, the outer function's Lexical Environment is kept alive as long as **any closure that references it** is still reachable.
 
@@ -418,7 +418,7 @@ Setting `fn = null` removes the last reference to `inner`, which removes the las
 <details>
 <summary><strong>12. Can Closures cause Memory Leaks?</strong></summary>
 
-Yes — closures cause memory leaks when they **unintentionally keep large objects alive** longer than needed.
+A **memory leak** is when memory that's no longer needed is never freed, causing the app to use more and more RAM over time. Closures cause leaks when they **unintentionally keep large objects alive** longer than needed — the GC can't free them because a closure still holds a reference.
 
 **Scenario 1: DOM element retained in closure**
 ```js
@@ -517,7 +517,7 @@ const memoized = (key) => {
 <details>
 <summary><strong>14. What is the Module Pattern and how does it use Closures?</strong></summary>
 
-The **Module Pattern** uses an IIFE to create a private scope, exposing only what's needed via a returned object. It was the standard way to write modular JS before ES Modules.
+The **Module Pattern** uses an **IIFE** (Immediately Invoked Function Expression — a function that runs once the moment it's defined) to create a private scope, exposing only what's needed via a returned object. It was the standard way to write modular JS before ES Modules.
 
 ```js
 const BankAccount = (function () {

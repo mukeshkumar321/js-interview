@@ -8,6 +8,7 @@
 
 - [Arrays Fundamentals](#arrays-fundamentals)
 - [Array Methods](#array-methods)
+- [Modern Array Methods (ES2022+)](#modern-array-methods-es2022)
 - [Data Structures](#data-structures)
 - [Advanced Concepts](#advanced-concepts)
 
@@ -411,6 +412,71 @@ users.sort((a, b) => a.age - b.age); // ascending by age
 > **Interview Note:** `sort` is mutating — it modifies the original array. For immutable sort: `[...arr].sort(...)` or `arr.toSorted(...)` (ES2023).
 
 </details>
+
+---
+
+## Modern Array Methods (ES2022+)
+
+### Array.at() — Clean Negative Indexing
+
+```js
+const arr = [10, 20, 30, 40, 50];
+
+arr.at(0);   // 10  (same as arr[0])
+arr.at(-1);  // 50  (last element)
+arr.at(-2);  // 40  (second to last)
+arr.at(10);  // undefined (out of bounds)
+```
+
+**Why use it:** `arr[arr.length - 1]` is verbose and error-prone. `arr.at(-1)` is cleaner and works on any array-like (strings, TypedArrays).
+
+> **Common mistake:** `arr[-1]` does NOT give the last element — it looks up a property named `"-1"`, which doesn't exist → `undefined`.
+
+### Object.groupBy() — ES2024
+
+Groups array elements by a key:
+
+```js
+const products = [
+  { name: 'apple', category: 'fruit' },
+  { name: 'carrot', category: 'vegetable' },
+  { name: 'banana', category: 'fruit' },
+];
+
+const grouped = Object.groupBy(products, p => p.category);
+// {
+//   fruit: [{ name: 'apple', ... }, { name: 'banana', ... }],
+//   vegetable: [{ name: 'carrot', ... }]
+// }
+```
+
+**Before ES2024** you'd use `reduce`:
+```js
+products.reduce((acc, p) => {
+  (acc[p.category] ??= []).push(p);
+  return acc;
+}, {});
+```
+
+`Object.groupBy` is cleaner and expresses intent directly.
+
+### Immutable Array Methods (ES2023)
+
+These return a NEW array instead of mutating the original:
+
+| Mutating (old) | Immutable (new) |
+|---|---|
+| `arr.sort()` | `arr.toSorted()` |
+| `arr.reverse()` | `arr.toReversed()` |
+| `arr.splice()` | `arr.toSpliced()` |
+| `arr[i] = x` | `arr.with(i, x)` |
+
+```js
+const nums = [3, 1, 2];
+const sorted = nums.toSorted();
+console.log(sorted); // [1, 2, 3]
+console.log(nums);   // [3, 1, 2] — original unchanged
+```
 
 ---
 

@@ -64,9 +64,9 @@ bar(1, 2);
 ```
 
 **Explanation:**  
-Both print the same output, but via different mechanisms. `arguments` is an array-like object available in regular functions. `...args` creates a real array. The values are the same here.
+Both print the same output but work differently. `arguments` is an array-like object available in regular functions. `...args` creates a real array.
 
-The real difference surfaces when you try array methods: `arguments.map(...)` would throw, `args.map(...)` works fine.
+The difference matters when you use array methods: `arguments.map(...)` throws, `args.map(...)` works fine.
 
 </details>
 
@@ -90,7 +90,7 @@ ReferenceError: arguments is not defined
 ```
 
 **Explanation:**  
-Arrow functions do **not** have their own `arguments` object. Accessing `arguments` inside an arrow function either throws a `ReferenceError` (if there's no enclosing regular function) or refers to the outer function's `arguments`.
+Arrow functions have no `arguments` object. Accessing it either throws a `ReferenceError` (no enclosing regular function) or refers to the outer function's `arguments`.
 
 > **Fix:** Use rest parameters: `const arr = (...args) => { console.log(args); };`
 
@@ -183,7 +183,7 @@ Alice
 
 **Explanation:**  
 - `obj.greet()` — implicit binding: `this = obj` → `'Alice'`
-- `const fn = obj.greet; fn()` — the method is detached. Default binding applies: `this = window` (or `undefined` in strict mode). In browsers, `window.name` defaults to `''` (empty string), not `'Alice'`. In strict mode, `this` is `undefined` and accessing `this.name` throws a `TypeError`.
+- `const fn = obj.greet; fn()` — method is detached, default binding applies: `this = window` (or `undefined` in strict mode). In browsers, `window.name` is `''` (empty string). In strict mode, `this` is `undefined` and accessing `this.name` throws a `TypeError`.
 
 > **Most common real-world `this` bug.** Always `bind` methods before passing them as callbacks.
 
@@ -581,7 +581,7 @@ obj.printFriends();
 ```
 
 **Explanation:**  
-The callback passed to `forEach` is a regular function — it has its own `this`. Since it's called without an object (default binding), `this = window` in non-strict mode. In browsers, `window.name` defaults to `''` (empty string), so the output is `' knows Bob'` and `' knows Carol'`. In strict mode, `this` is `undefined` and accessing `this.name` would throw a `TypeError`.
+The callback passed to `forEach` is a regular function with its own `this`. Called without an object, default binding applies: `this = window` in non-strict mode. In browsers, `window.name` is `''` (empty string), giving `' knows Bob'` and `' knows Carol'`. In strict mode, `this` is `undefined` and `this.name` throws a `TypeError`.
 
 **Fix:**
 ```js
@@ -657,7 +657,7 @@ NaN
 ```
 
 **Explanation:**  
-The `setInterval` callback is a regular function — `this` is `window` (or `undefined` strict), NOT the `Timer` instance. `window.count` is `undefined`. `undefined++` = `NaN`. `NaN++` = `NaN`.
+The `setInterval` callback is a regular function — `this` is `window` (or `undefined` in strict mode), not the `Timer` instance. `window.count` is `undefined`. `undefined++` gives `NaN`, and `NaN++` stays `NaN`.
 
 **Fix with arrow function:**
 ```js
@@ -945,7 +945,7 @@ Alice is 30 years old.
 ```
 
 **Explanation:**  
-You can pass values back INTO a generator via `.next(value)`. The passed value becomes the result of the `yield` expression. First `.next()` has no argument (the first yield's result is never used as a value here). Second `.next('Alice')` resumes — `'Alice'` becomes `name`. Third `.next(30)` — `30` becomes `age`.
+You can pass values back into a generator via `.next(value)`. The value becomes the result of the `yield` expression at the current pause point. The first `.next()` has no value to receive yet. `.next('Alice')` resumes and `'Alice'` becomes `name`. `.next(30)` resumes and `30` becomes `age`.
 
 > **Common Mistake:** Passing a value to the first `.next()` call expecting it to be used — it's ignored because no `yield` expression has run yet to receive it.
 

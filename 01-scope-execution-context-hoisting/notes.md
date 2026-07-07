@@ -167,13 +167,16 @@ console.log(x); // 10
 
 **Illegal Shadowing** — you cannot shadow a `let` with a `var` in the same or nested block, because `var` leaks out of the block and would collide.
 
+> **Note:** The two snippets below are separate examples. If you put them in the same script, the `SyntaxError` from the first would prevent any code from running. They illustrate different behaviours — not a single runnable program.
+
 ```js
+// Example A — illegal: var cannot shadow a let in the same scope
 let a = 5;
 {
   var a = 10; // ❌ SyntaxError: Identifier 'a' has already been declared
 }
 
-// But this is fine:
+// Example B — legal: let can shadow a var
 var b = 5;
 {
   let b = 10; // ✅ allowed — let is contained to block
@@ -383,7 +386,7 @@ recurse(100); // ✅
 
 **Real-world cause:** Circular references in recursive tree/graph traversal, or accidentally calling a function inside itself in event handlers.
 
-**Workaround for very deep recursion:** Use **trampolining** or convert to an iterative approach with an explicit stack.
+**Workaround for very deep recursion:** Use **trampolining** (a technique where each recursive step returns a function instead of calling itself directly, so the call stack never grows) or convert to an iterative approach with an explicit stack.
 
 ```js
 // Trampoline pattern
@@ -651,9 +654,11 @@ main();
 |---------|-------|-------|---------|---------------------|
 | Scope | Function | Block | Block | Function |
 | Hoisted | Yes (`undefined`) | Yes (TDZ) | Yes (TDZ) | Yes (full body) |
-| Re-declarable | Yes | No | No | Yes (same scope) |
+| Re-declarable | Yes | No | No | Yes (same scope)* |
 | Re-assignable | Yes | Yes | No | Yes |
 | Global object prop | Yes | No | No | Yes |
+
+*Re-declaring a function declaration with the same name works silently in non-strict (sloppy) mode scripts. In **strict mode** (`'use strict'`) and **ES Modules** (which are always strict), re-declaring a function in the same block-level scope is a `SyntaxError`.
 
 ---
 

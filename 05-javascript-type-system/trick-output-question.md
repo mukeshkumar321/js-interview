@@ -80,7 +80,7 @@ ReferenceError: undeclaredVariable is not defined
 ```
 
 **Explanation:**  
-`typeof` is special — it does **not throw** for undeclared variables. It returns `"undefined"`. Directly accessing an undeclared variable throws a `ReferenceError`. This makes `typeof` the safe way to check if something exists: `if (typeof myVar !== 'undefined')`.
+`typeof` does **not throw** for undeclared variables — it returns `"undefined"`. Accessing an undeclared variable any other way throws a `ReferenceError`. This makes `typeof` the safe way to test existence: `if (typeof myVar !== 'undefined')`.
 
 </details>
 
@@ -392,13 +392,13 @@ true
 ```
 
 **Explanation:**  
-- `null + 1` → `null` coerced to `0` → `1`
-- `null + '1'` → `null` coerced to `'null'` (string context), concatenated → `'null1'`
-- `null == 0` → `false` — `null` only `==` `undefined`, not `0`
-- `null > 0` → `false` — `null` coerced to `0`, `0 > 0` = `false`
-- `null >= 0` → **`true`** — `null` coerced to `0`, `0 >= 0` = `true`
+- `null + 1` → `null` → `0` → `1`
+- `null + '1'` → string context: `null` → `'null'`, concatenated → `'null1'`
+- `null == 0` → `false` — `null` only `==` `undefined`, nothing else
+- `null > 0` → `false` — `null` → `0`, then `0 > 0` = `false`
+- `null >= 0` → **`true`** — `null` → `0`, then `0 >= 0` = `true`
 
-> **Classic trap.** `null == 0` is `false` but `null >= 0` is `true` — these are handled by different algorithms in the spec.
+> **Classic trap.** `null == 0` is `false` but `null >= 0` is `true` — equality and comparison use different algorithms in the spec.
 
 </details>
 
@@ -790,11 +790,11 @@ true
 ```
 
 **Explanation:**  
-Floating point arithmetic in JavaScript (IEEE 754 double precision) cannot represent `0.1` or `0.2` exactly, so their sum has a tiny rounding error: `0.30000000000000004`.
+JavaScript uses IEEE 754 double precision. `0.1` and `0.2` cannot be represented exactly in binary, so their sum is `0.30000000000000004` — close but not equal to `0.3`. `===` fails.
 
-`Number.EPSILON` is the smallest representable difference between two floats (~2.22e-16). Comparing with `< Number.EPSILON` is the correct way to test float equality.
+`Number.EPSILON` (~2.22e-16) is the smallest difference between two representable doubles. Checking that the difference is less than `Number.EPSILON` is the correct way to compare floats.
 
-> **Real-world impact:** Never compare floating-point currency values with `===`. Use integer arithmetic (store cents) or a decimal library.
+> **Real-world impact:** Never compare floating-point currency values with `===`. Store amounts as integers (cents) or use a decimal library.
 
 </details>
 
@@ -869,9 +869,9 @@ true
 ```
 
 **Explanation:**  
-IEEE 754 double-precision floating point cannot represent 0.1 or 0.2 exactly. Their sum is `0.30000000000000004`. Direct `===` comparison fails. The correct way to compare floats is checking if the difference is smaller than `Number.EPSILON` (the smallest difference between two representable doubles).
+`0.1` and `0.2` cannot be represented exactly in binary (IEEE 754), so the sum is `0.30000000000000004`. Direct `===` fails. `Number.EPSILON` is the smallest difference between two representable doubles (~2.22e-16) — its exact value is `2.220446049250313e-16`.
 
-> **Common Mistake:** Using `===` to compare floating point calculations. Always use `Number.EPSILON` or `toFixed()` for monetary/precise comparisons.
+> **Common Mistake:** Using `===` to compare float results. Use `Number.EPSILON` for equality checks, or `toFixed()` for display.
 
 </details>
 
@@ -901,9 +901,14 @@ console.log(['1', '2', '3'].map(parseInt));
 ```
 
 **Explanation:**  
-`parseInt` without a radix defaults to 10 in modern engines (legacy engines treated `08` as octal = 0). `0x10` is auto-detected as hex = 16. `parseInt('10', 2)` reads `10` in binary = 2. `parseInt` truncates, doesn't round. `['1','2','3'].map(parseInt)` passes `(value, index, array)` — so calls are `parseInt('1',0)`, `parseInt('2',1)`, `parseInt('3',2)`. Radix `0` is treated as 10 → `1`. Radix `1` is invalid → `NaN`. `parseInt('3', 2)` — `3` is not a valid binary digit → `NaN`.
+- `parseInt('08')` → defaults to radix 10 in modern engines → `8`
+- `parseInt('08', 10)` → explicit decimal → `8`
+- `parseInt('0x10')` → auto-detected as hex → `16`
+- `parseInt('10', 2)` → binary `10` = `2`
+- `parseInt('3.9')` → truncates, doesn't round → `3`
+- `['1','2','3'].map(parseInt)` → `.map` passes `(value, index, array)`, so the calls are `parseInt('1', 0)`, `parseInt('2', 1)`, `parseInt('3', 2)`. Radix `0` is treated as 10 → `1`. Radix `1` is invalid → `NaN`. `'3'` is not a valid binary digit → `NaN`.
 
-> **Common Mistake:** Passing `parseInt` directly to `.map()` without wrapping it — the index becomes the radix argument.
+> **Common Mistake:** Passing `parseInt` directly to `.map()` — the array index becomes the radix. Wrap it: `.map(n => parseInt(n, 10))`.
 
 </details>
 

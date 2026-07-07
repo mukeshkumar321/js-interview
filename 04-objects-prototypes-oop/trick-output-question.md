@@ -741,7 +741,7 @@ undefined
 ```
 
 **Explanation:**  
-`Person.count` is a property on the **constructor function** itself, not on instances. The first `console.log(Person.count)` runs after 3 `new Person(...)` calls (Alice, Bob, Carol), so `Person.count = 3`. The `new Person('Dave')` only runs inside the second `console.log` expression — after the first log has already printed. `new Person('Dave').count` looks for `count` on the instance — it's not there (own property check) and not on `Person.prototype` (only on `Person` the function) → `undefined`.
+`Person.count` lives on the constructor function itself, not on instances. After Alice, Bob, and Carol are created, `Person.count = 3`. For the second log: `new Person('Dave').count` looks for `count` on the instance — it's not there, and it's not on `Person.prototype` either (it's only on the function `Person`) → `undefined`.
 
 </details>
 

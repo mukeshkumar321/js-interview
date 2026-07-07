@@ -146,7 +146,7 @@ All three functions close over the **same `i`** — because `var` is function-sc
 for (let i = 0; i < 3; i++) { ... } // 0, 1, 2
 ```
 
-**Fix with IIFE:**
+**Fix with IIFE** (pre-ES6 approach — an IIFE runs immediately and creates a new scope, capturing the current `i` as `j`):
 ```js
 fns.push((function (j) {
   return function () { console.log(j); };
@@ -307,6 +307,8 @@ console.log(a()); // ?
 ---
 
 **Q9. What is the output?**
+
+> The outer `(function() { ... })()` is an **IIFE** (Immediately Invoked Function Expression) — a function that runs once the moment it's defined. Here it creates a private scope and returns an object. See Ch. 1 Q9 for a full IIFE intro.
 
 ```js
 const counter = (function () {

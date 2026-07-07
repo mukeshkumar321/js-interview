@@ -677,9 +677,7 @@ A throw inside an `async` function rejects the returned Promise. `await inner()`
 
 ---
 
----
-
-**Q25. What is the output?**
+### Q25. Async generator with `for await...of`
 
 ```js
 async function* asyncRange(start, end) {
@@ -707,16 +705,15 @@ async function* asyncRange(start, end) {
 done
 ```
 
-**Explanation:**  
-`async function*` is an async generator — it can both `await` and `yield`. `for await...of` iterates async iterables, awaiting each value. The `await new Promise(r => setTimeout(r, 0))` simulates async work per iteration. The loop waits for each yielded value before continuing. This pattern is key for processing streams of data lazily.
+`async function*` is an async generator — it can both `await` (for async work) and `yield` (to emit values one at a time). `for await...of` consumes it, waiting for each yielded value before moving to the next. This is the core pattern for processing data streams lazily.
 
-> **Common Mistake:** Using `for...of` (without `await`) on an async iterable — it would iterate over Promise objects, not the resolved values.
+> **Common mistake:** Using `for...of` (without `await`) on an async iterable — each iteration gets a Promise object, not the resolved value.
 
 </details>
 
 ---
 
-**Q26. What is the output?**
+### Q26. `requestIdleCallback` vs `setTimeout`
 
 ```js
 console.log('1: sync start');
@@ -742,16 +739,15 @@ console.log('1: sync end');
 3: idle callback
 ```
 
-**Explanation:**  
-`requestIdleCallback` runs during browser idle time — after all pending tasks (including setTimeout callbacks) have been processed, when the browser has spare time before the next frame. `setTimeout(fn, 0)` fires as a macrotask but still before idle time. Sync code always runs first.
+`requestIdleCallback` runs only when the browser is idle — after all pending tasks (including `setTimeout` callbacks) are done and before the next frame (if time allows). Sync code runs first, then macrotasks, then idle callbacks.
 
-> **Common Mistake:** Assuming `requestIdleCallback` fires immediately after the current task like `setTimeout(fn, 0)`. It only runs when the browser is genuinely idle, which could be much later or throttled if the tab is busy.
+> **Common mistake:** Treating `requestIdleCallback` like `setTimeout(fn, 0)`. It does not fire after just one task — it waits for genuine idle time, which may be delayed indefinitely if the tab stays busy.
 
 </details>
 
 ---
 
-**Q27. What is the output?**
+### Q27. Web Worker message passing
 
 ```js
 // main.js
@@ -782,10 +778,9 @@ Message sent
 Result: 8
 ```
 
-**Explanation:**  
-Web Workers run in a separate thread — `postMessage` is async. Sync code (`'Message sent'`) runs before the worker responds. The worker receives the message, computes `5 + 3 = 8`, and sends back `{ result: 8 }` via `self.postMessage`. The main thread's `onmessage` then fires with `e.data.result = 8`. Workers don't share memory — all data is copied (structured clone).
+Workers run in a separate thread. `postMessage` is async, so `'Message sent'` logs immediately (synchronous). The worker receives the message, computes `5 + 3 = 8`, and replies via `self.postMessage`. The main thread's `onmessage` fires with `e.data.result = 8`. Data is copied between threads (structured clone) — there is no shared memory by default.
 
-> **Common Mistake:** Expecting the worker response to be available synchronously after `postMessage`. Worker communication is always async — you must use `onmessage`/`addEventListener` to receive results.
+> **Common mistake:** Expecting the worker's response synchronously after `postMessage`. Worker communication is always async — use `onmessage` or `addEventListener('message', ...)` to receive results.
 
 </details>
 

@@ -662,6 +662,158 @@ Number(1n); // 1 — explicit conversion ok
 
 ---
 
+---
+
+## Promise Combinators — allSettled and any
+
+### Promise.allSettled (ES2020)
+
+Waits for **all** promises to finish — fulfilled or rejected. Never short-circuits.
+
+```js
+const results = await Promise.allSettled([
+  Promise.resolve('ok'),
+  Promise.reject('fail'),
+  Promise.resolve('also ok'),
+]);
+
+results.forEach(r => {
+  if (r.status === 'fulfilled') console.log('✅', r.value);
+  else console.log('❌', r.reason);
+});
+// ✅ ok
+// ❌ fail
+// ✅ also ok
+```
+
+**Use when:** You want to run multiple independent operations and handle each result — even if some fail.
+
+**vs Promise.all:** `Promise.all` short-circuits on the first rejection, losing all other results.
+
+### Promise.any (ES2021)
+
+Resolves with the **first fulfilled** promise. Rejects only if ALL reject (with `AggregateError`).
+
+```js
+Promise.any([
+  Promise.reject('err1'),
+  Promise.resolve('first success'),
+  Promise.resolve('second success'),
+]).then(v => console.log(v)); // 'first success'
+```
+
+**vs Promise.race:** `race` resolves/rejects with the first *settled* promise (including rejections). `any` ignores rejections until all have failed.
+
+| Method | Resolves when | Rejects when |
+|--------|--------------|--------------|
+| `Promise.all` | ALL fulfill | ANY rejects |
+| `Promise.allSettled` | ALL settle | Never |
+| `Promise.any` | ANY fulfills | ALL reject |
+| `Promise.race` | FIRST settles | FIRST rejects |
+
+---
+
+## Object.fromEntries (ES2019)
+
+Converts an array of `[key, value]` pairs (or a Map) into a plain object. It's the inverse of `Object.entries()`.
+
+```js
+// From array
+Object.fromEntries([['a', 1], ['b', 2]]); // { a: 1, b: 2 }
+
+// Transform object values (entries → map → fromEntries)
+const prices = { apple: 1.5, banana: 0.5 };
+const doubled = Object.fromEntries(
+  Object.entries(prices).map(([k, v]) => [k, v * 2])
+);
+// { apple: 3, banana: 1 }
+
+// From Map
+const map = new Map([['x', 10], ['y', 20]]);
+Object.fromEntries(map); // { x: 10, y: 20 }
+```
+
+---
+
+## Logical Assignment Operators (ES2021)
+
+Three new operators that combine a logical check with assignment:
+
+```js
+// ??= : assign only if null or undefined
+let a = null;
+a ??= 'default'; // a = 'default'
+
+let b = 0;
+b ??= 'default'; // b = 0  (0 is NOT null/undefined)
+
+// ||= : assign only if falsy
+let c = 0;
+c ||= 'fallback'; // c = 'fallback'  (0 is falsy)
+
+// &&= : assign only if truthy (replaces the truthy value)
+let d = 'hello';
+d &&= d.toUpperCase(); // d = 'HELLO'
+
+let e = '';
+e &&= e.toUpperCase(); // e = ''  (falsy, not replaced)
+```
+
+**Key difference — `??=` vs `||=`:**
+```js
+let volume = 0;
+volume ??= 50;  // still 0 — 0 is a valid volume, not null/undefined
+volume ||= 50;  // becomes 50 — 0 is falsy, treated as "missing"
+```
+
+Use `??=` when `0`, `false`, `''` are valid values. Use `||=` when any falsy value means "not set."
+
+---
+
+## Proxy and Reflect
+
+### Proxy
+
+`Proxy` wraps an object and intercepts operations via **traps**:
+
+```js
+const handler = {
+  get(target, key) {
+    return key in target ? target[key] : `'${key}' not found`;
+  },
+  set(target, key, value) {
+    if (typeof value !== 'number') throw new TypeError('Numbers only');
+    target[key] = value;
+    return true; // REQUIRED — omitting causes TypeError in strict mode
+  }
+};
+
+const obj = new Proxy({}, handler);
+obj.x = 42;
+console.log(obj.x);   // 42
+console.log(obj.y);   // 'y' not found
+obj.z = 'hi';         // TypeError: Numbers only
+```
+
+**Common traps:** `get`, `set`, `has` (for `in` operator), `deleteProperty`, `apply` (for function calls).
+
+### Reflect
+
+`Reflect` is a companion to `Proxy` — it provides the **default behavior** for each trap, so you can extend without fully replacing:
+
+```js
+const handler = {
+  set(target, key, value) {
+    console.log(`Setting ${key} = ${value}`);
+    return Reflect.set(target, key, value); // default set behavior
+  }
+};
+```
+
+**Rule:** Always use `Reflect.set/get/has` inside traps to call the default behavior — don't use `target[key]` directly as it bypasses other proxies in the chain.
+
+---
+
 ## Quick Reference Cheat Sheet
 
 **Destructuring patterns:**

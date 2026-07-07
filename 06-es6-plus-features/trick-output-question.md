@@ -792,7 +792,7 @@ fulfilled also success
 ```
 
 **Explanation:**  
-`Promise.allSettled` waits for ALL promises regardless of outcome. Each result has `status: 'fulfilled'` with `value`, or `status: 'rejected'` with `reason`. Unlike `Promise.all`, it never short-circuits on rejection — you always get results for every promise.
+`Promise.allSettled` waits for all promises regardless of outcome. Each result has `status: 'fulfilled'` with `value`, or `status: 'rejected'` with `reason`. It never short-circuits — you always get one result per promise.
 
 > **Common Mistake:** Using `Promise.all` when you want to run multiple independent operations and handle each result — `Promise.all` rejects immediately on the first failure, losing all other results.
 
@@ -821,7 +821,7 @@ resolved: first success
 ```
 
 **Explanation:**  
-`Promise.any` resolves with the FIRST fulfilled promise, ignoring rejections. If ALL reject, it throws an `AggregateError`. Here `p3` is the first to fulfill (p1 and p2 are already rejected), so `'first success'` wins.
+`Promise.any` resolves with the first fulfilled promise, ignoring rejections. `p1` and `p2` reject, but `p3` fulfills — so `'first success'` wins. If all promises had rejected, it would throw an `AggregateError`.
 
 > **Common Mistake:** Confusing `Promise.any` with `Promise.race` — `race` resolves/rejects with the FIRST settled promise (including rejections), while `any` only resolves on fulfilment and needs ALL to reject before it rejects.
 
@@ -922,7 +922,9 @@ HELLO
 ```
 
 **Explanation:**  
-`??=` assigns only if the left side is `null`/`undefined` (nullish). `||=` assigns if the left side is falsy (`0` is falsy). `&&=` assigns only if the left side is truthy — it replaces the truthy value with the right side. So: `a` was null → gets `'default'`; `b` was `0` (falsy) → gets `'fallback'`; `c` was `'hello'` (truthy) → gets `'HELLO'`.
+- `a ??= 'default'` → `a` was `null` (nullish) → assigns `'default'`
+- `b ||= 'fallback'` → `b` was `0` (falsy) → assigns `'fallback'`
+- `c &&= c.toUpperCase()` → `c` was `'hello'` (truthy) → replaces with `'HELLO'`
 
 > **Common Mistake:** Treating `??=` and `||=` as identical. `b = 0; b ??= 'x'` leaves `b` as `0` (0 is not nullish), but `b ||= 'x'` changes it to `'x'` (0 is falsy).
 

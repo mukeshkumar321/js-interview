@@ -11,6 +11,9 @@
 - [Event & Rendering Optimization](#event--rendering-optimization)
 - [Bundle & Network Optimization](#bundle--network-optimization)
 - [Memory & React Performance](#memory--react-performance)
+- [requestAnimationFrame for Animations](#requestanimationframe-for-animations)
+- [Web Workers for Performance](#web-workers-for-performance)
+- [Service Worker Caching for Performance](#service-worker-caching-for-performance)
 
 ---
 
@@ -589,6 +592,86 @@ function useWhyRerender(name, props) {
 
 ---
 
+---
+
+## requestAnimationFrame for Animations
+
+Always use `requestAnimationFrame` (rAF) for animations — never `setInterval` or `setTimeout`.
+
+```js
+// ❌ Bad — timer-based, causes jank
+let pos = 0;
+setInterval(() => {
+  pos += 5;
+  box.style.left = pos + 'px';
+}, 16);
+
+// ✅ Good — synced with browser paint cycle
+function animate() {
+  pos += 5;
+  box.style.transform = `translateX(${pos}px)`;
+  requestAnimationFrame(animate);
+}
+requestAnimationFrame(animate);
+```
+
+**Why rAF is better:**
+- Syncs with screen refresh (60fps = ~16.7ms per frame)
+- Auto-pauses when tab is hidden (saves CPU/battery)
+- Batches with browser rendering pipeline — no wasted frames
+
+**Bonus:** Animating `transform` (not `top`/`left`) keeps the animation on the GPU compositor layer — skipping layout and paint entirely.
+
+---
+
+## Web Workers for Performance
+
+Move CPU-heavy tasks off the main thread using Web Workers:
+
+```js
+// main.js
+const worker = new Worker('worker.js');
+worker.postMessage({ data: largeArray });
+worker.onmessage = (e) => console.log('Result:', e.data);
+
+// worker.js
+self.onmessage = (e) => {
+  const result = e.data.data.reduce((sum, n) => sum + n, 0);
+  self.postMessage(result);
+};
+```
+
+**Rule of thumb:** If a task takes >50ms, move it to a Worker.
+
+**Use Workers for:** Image processing, large data sorting, complex math, CSV parsing.
+
+**Don't use Workers for:** Simple API calls (use async/await), small computations (overhead not worth it).
+
+---
+
+## Service Worker Caching for Performance
+
+Service Workers can serve your app's assets from cache — dramatically improving load times on repeat visits.
+
+```js
+// Cache-first strategy for static assets
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    caches.match(event.request)
+      .then(cached => cached || fetch(event.request))
+  );
+});
+```
+
+**Impact on Core Web Vitals:**
+- Faster LCP (Largest Contentful Paint) — assets load from disk cache
+- Better FID/INP — fewer blocking network requests
+- Supports offline functionality
+
+**Cache versioning:** Change your cache name (`app-v2`) when deploying updates, and delete old caches in the `activate` event.
+
+---
+
 ## Quick Reference Cheat Sheet
 
 ```
@@ -616,6 +699,21 @@ Memory leak checklist:
   □ clearInterval/clearTimeout in cleanup
   □ AbortController for fetch in useEffect
   □ Unsubscribe from observables/stores
+
+requestAnimationFrame:
+  Use for ALL animations — never setInterval/setTimeout
+  Pauses in hidden tab | Syncs with paint cycle | Use transform not left/top
+
+Web Workers:
+  >50ms tasks → move to Worker
+  postMessage() to send data | onmessage to receive results
+  No DOM access | Separate thread
+
+Service Worker Caching:
+  Cache First → static assets (CSS, JS, images)
+  Network First → dynamic API data
+  Stale While Revalidate → feeds, non-critical content
+  Change cache name on deploy + delete old caches in activate
 ```
 
 ---

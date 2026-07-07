@@ -347,7 +347,7 @@ arr.forEach((item, index, array) => {
 3
 ```
 
-Per the ECMAScript spec, `forEach` captures the array's length **before** iteration begins. Element `4` is pushed during the iteration at index 0, but since the original length was `3`, `forEach` only visits indices 0, 1, and 2. Elements added beyond the initial length are never visited. Avoid mutating the array inside `forEach`.
+`forEach` locks in the array's length before iteration starts. Even though `4` is pushed at index 0, only the original 3 indices (0, 1, 2) are visited. Elements added beyond the original length are never reached. Avoid mutating the array inside `forEach`.
 
 </details>
 
@@ -462,7 +462,7 @@ console.log(arr[2]);
 undefined
 ```
 
-`delete` sets the element to an **empty hole** — it does NOT re-index or change `length`. The array becomes sparse. To properly remove an element and shift others, use `splice(2, 1)`.
+`delete` removes the value at that index but leaves a hole — it does not re-index or change `length`. The array becomes sparse. To remove an element and shift the rest, use `splice(2, 1)`.
 
 </details>
 
@@ -569,7 +569,7 @@ console.log(obj['constructor'] === Object);
 false
 ```
 
-`Map` safely stores any string as a key including `'constructor'` and `'__proto__'`. With the plain object, `obj['constructor'] = 'unsafe?'` creates an **own property** named `'constructor'` that **shadows** `Object.prototype.constructor`. So `obj['constructor']` now returns the string `'unsafe?'`, not the `Object` function — making `obj['constructor'] === Object` → `false`. `Map` is safer for dynamic/arbitrary keys.
+`Map` stores any string as a key safely. With the plain object, `obj['constructor'] = 'unsafe?'` creates an own property that shadows `Object.prototype.constructor`. So `obj['constructor']` returns `'unsafe?'` (the string), not the `Object` function — making `=== Object` false. Use `Map` when keys are dynamic or user-controlled.
 
 </details>
 
@@ -577,11 +577,7 @@ false
 
 ---
 
-## Array.at() and Modern Methods
-
----
-
-**Q25. What is the output?**
+### Q25. `Array.at()` with negative indices
 
 ```js
 const arr = [10, 20, 30, 40, 50];
@@ -604,16 +600,15 @@ true
 undefined
 ```
 
-**Explanation:**  
-`Array.at()` supports negative indices — `-1` maps to the last element, `-2` to second-last, etc. It's cleaner than `arr[arr.length - 1]`. Out-of-bounds returns `undefined`, same as bracket notation.
+`Array.at()` accepts negative indices: `-1` is the last element, `-2` is second-to-last. It's cleaner than `arr[arr.length - 1]`. Out-of-bounds returns `undefined`.
 
-> **Common Mistake:** Using `arr[-1]` expecting the last element — bracket notation with `-1` looks up the property `"-1"` which doesn't exist, returning `undefined` regardless.
+> **Common mistake:** `arr[-1]` does NOT give the last element. Bracket notation looks up a property named `"-1"`, which doesn't exist → `undefined`.
 
 </details>
 
 ---
 
-**Q26. What is the output?**
+### Q26. `Object.groupBy()` — ES2024
 
 ```js
 const items = [
@@ -638,10 +633,9 @@ console.log(grouped.vegetable[0].name);
 carrot
 ```
 
-**Explanation:**  
-`Object.groupBy()` (ES2024) groups array elements by a key returned from the callback. The result is a null-prototype object where each key holds an array of matching elements. Original order within groups is preserved.
+`Object.groupBy()` (ES2024) groups array elements by the key returned from the callback. Each key holds an array of matching elements in their original order. The result is a null-prototype object (no inherited keys).
 
-> **Common Mistake:** Using `Array.prototype.reduce` to manually group — `Object.groupBy` is now the idiomatic approach and doesn't require a polyfill in modern environments.
+> **Common mistake:** Manually grouping with `reduce` still works, but `Object.groupBy` is now the idiomatic approach in modern environments.
 
 </details>
 

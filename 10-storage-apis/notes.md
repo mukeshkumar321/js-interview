@@ -10,6 +10,7 @@
 - [Security Considerations](#security-considerations)
 - [IndexedDB](#indexeddb)
 - [Real-World Usage](#real-world-usage)
+- [Service Worker and Cache API](#service-worker-and-cache-api)
 
 ---
 
@@ -462,6 +463,80 @@ Simple string key-value, stays client-side?
 
 ---
 
+---
+
+## Service Worker and Cache API
+
+### What is a Service Worker?
+
+A Service Worker is a JavaScript file that runs in the background, separate from your web page. It acts as a **network proxy** — intercepting fetch requests and deciding whether to serve from cache or the network.
+
+```
+Browser Page  ←→  Service Worker  ←→  Network
+                      ↕
+                   Cache API
+```
+
+**Key facts:**
+- Runs in a separate thread (like a Web Worker) — no DOM access
+- Only works on HTTPS (or localhost)
+- Has its own lifecycle: `install` → `activate` → `fetch`
+
+### Service Worker Lifecycle
+
+```js
+// Install — cache your app's assets
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open('app-v1').then(cache =>
+      cache.addAll(['/index.html', '/style.css', '/app.js'])
+    )
+  );
+});
+
+// Activate — clean up old caches
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(
+        keys.filter(k => k !== 'app-v1').map(k => caches.delete(k))
+      )
+    )
+  );
+});
+
+// Fetch — intercept network requests
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    caches.match(event.request).then(cached =>
+      cached || fetch(event.request)
+    )
+  );
+});
+```
+
+### Caching Strategies
+
+| Strategy | How it works | Best for |
+|---|---|---|
+| **Cache First** | Return cache, fallback to network | Static assets (CSS, JS, images) |
+| **Network First** | Try network, fallback to cache | API data that changes often |
+| **Stale While Revalidate** | Return cache immediately, update cache in background | Feeds, non-critical data |
+| **Cache Only** | Only serve from cache | Fully offline apps |
+
+### Checking Storage Quota
+
+```js
+const estimate = await navigator.storage.estimate();
+const usedMB = (estimate.usage / 1024 / 1024).toFixed(1);
+const quotaMB = (estimate.quota / 1024 / 1024).toFixed(0);
+console.log(`Using ${usedMB}MB of ${quotaMB}MB`);
+```
+
+Always check quota before large IndexedDB or Cache API writes.
+
+---
+
 ## Quick Reference Cheat Sheet
 
 ```
@@ -484,6 +559,12 @@ Security flags:
   SameSite=Lax    → balanced (recommended default)
 
 Storage event → fires in OTHER tabs when localStorage changes
+
+Service Worker:
+  Lifecycle: install → activate → fetch
+  HTTPS only | No DOM access | Runs in background thread
+  Caching strategies: Cache First | Network First | Stale While Revalidate
+  navigator.storage.estimate() → check quota before large writes
 ```
 
 ---

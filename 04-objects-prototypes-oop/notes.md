@@ -10,6 +10,8 @@
 - [Prototypes & Prototype Chain](#prototypes--prototype-chain)
 - [OOP & Classes](#oop--classes)
 
+**Objects Fundamentals includes:** object creation, dot vs bracket notation, references, shallow/deep copy, cloning, own vs inherited properties, freeze, seal, property descriptors, getters & setters
+
 ---
 
 ## Objects Fundamentals
@@ -272,6 +274,103 @@ console.log(obj); // { name: 'Bob', age: 30 }
 
 ---
 
+<details>
+<summary><strong>9. What are Property Descriptors?</strong></summary>
+
+Every object property has a hidden **descriptor** — metadata that controls how the property behaves. You can read or set it with `Object.getOwnPropertyDescriptor` / `Object.defineProperty`.
+
+**Descriptor flags:**
+
+| Flag | Default (normal assignment) | Meaning |
+|------|----------------------------|---------|
+| `value` | the assigned value | The property's value |
+| `writable` | `true` | Can the value be changed? |
+| `enumerable` | `true` | Does it show in `for...in` and `Object.keys`? |
+| `configurable` | `true` | Can the descriptor itself be changed or the property deleted? |
+
+```js
+const obj = { a: 1 };
+
+Object.defineProperty(obj, 'b', {
+  value: 2,
+  writable: false,    // can't reassign
+  enumerable: false,  // hidden from Object.keys / for...in
+  configurable: false // can't delete or redefine
+});
+
+obj.b = 99;               // silently ignored (throws in strict mode)
+console.log(obj.b);       // 2
+
+Object.keys(obj);         // ['a'] — 'b' is not enumerable
+'b' in obj;               // true — 'in' checks existence, not enumerability
+delete obj.b;             // silently ignored
+```
+
+**Inspecting a descriptor:**
+```js
+Object.getOwnPropertyDescriptor(obj, 'a');
+// { value: 1, writable: true, enumerable: true, configurable: true }
+```
+
+> **Interview Note:** `Object.freeze()` sets `writable: false` and `configurable: false` on every property. `Object.seal()` sets `configurable: false` but leaves `writable: true`.
+
+</details>
+
+---
+
+<details>
+<summary><strong>10. What are Getters and Setters?</strong></summary>
+
+Getters and setters let you define **computed properties** — properties that run a function when accessed or assigned, without the caller knowing it's not a plain value.
+
+**Object literal syntax:**
+```js
+const person = {
+  firstName: 'Alice',
+  lastName: 'Smith',
+
+  get fullName() {
+    return `${this.firstName} ${this.lastName}`;
+  },
+
+  set fullName(value) {
+    [this.firstName, this.lastName] = value.split(' ');
+  }
+};
+
+console.log(person.fullName);       // 'Alice Smith' — calls getter
+person.fullName = 'Bob Jones';      // calls setter
+console.log(person.firstName);      // 'Bob'
+```
+
+**Class syntax:**
+```js
+class Temperature {
+  #celsius;
+
+  constructor(c) { this.#celsius = c; }
+
+  get fahrenheit() { return this.#celsius * 9/5 + 32; }
+  set fahrenheit(f) { this.#celsius = (f - 32) * 5/9; }
+}
+
+const t = new Temperature(100);
+console.log(t.fahrenheit); // 212
+t.fahrenheit = 32;
+console.log(t.fahrenheit); // 32 — #celsius is now 0
+```
+
+**Key points:**
+- Accessed like a plain property — no `()` needed
+- Useful for computed values, validation on set, and lazy initialization
+- A property can have a getter without a setter (read-only) or a setter without a getter (write-only)
+
+> **Common Mistake:** Calling a getter like a method — `person.fullName()` throws `TypeError: person.fullName is not a function`. Access it as a property: `person.fullName`.
+
+</details>
+
+---
+
 ## Prototypes & Prototype Chain
 
 <details>
@@ -388,7 +487,7 @@ function Person(name) {
 function simulateNew(Constructor, ...args) {
   const obj = Object.create(Constructor.prototype); // steps 1 & 2
   const result = Constructor.apply(obj, args);       // step 3
-  return result instanceof Object ? result : obj;    // step 4
+  return result instanceof Object ? result : obj;    // step 4 — Note: instanceof Object fails for Object.create(null) objects
 }
 
 const alice = simulateNew(Person, 'Alice');
@@ -556,7 +655,7 @@ Object.getPrototypeOf(Animal.prototype); // Object.prototype
 
 | | Constructor Function | ES6 Class |
 |--|---------------------|-----------|
-| Hoisted | Yes (as function) | No (TDZ) |
+| Hoisted | Yes (as function) | TDZ (hoisted but inaccessible before declaration) |
 | Strict mode | Only if opted in | Always |
 | Methods enumerable | Yes | No |
 | Requires `new` | No (silently breaks) | Yes (throws) |

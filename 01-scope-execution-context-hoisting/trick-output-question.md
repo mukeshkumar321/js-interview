@@ -164,11 +164,17 @@ function
 
 **Q6. What is the output?**
 
+> **Note:** These are two separate conceptual examples. If placed in the same script, the `SyntaxError` from the `let` re-declaration would prevent the entire file from running — so neither snippet would produce output. Treat each block independently.
+
 ```js
+// Example A — var re-declaration
 var a = 1;
 var a = 2;
 console.log(a);
+```
 
+```js
+// Example B — let re-declaration
 let b = 1;
 let b = 2; // ?
 ```
@@ -177,7 +183,10 @@ let b = 2; // ?
 <summary>Show Output & Explanation</summary>
 
 ```
+// Example A:
 2
+
+// Example B:
 SyntaxError: Identifier 'b' has already been declared
 ```
 
@@ -290,7 +299,8 @@ for (let i = 0; i < 3; i++) {
 ```
 Each `let` iteration creates a new block scope with its own `i`.
 
-**Fix with IIFE (pre-ES6):**
+**Fix with IIFE (pre-ES6):**  
+An IIFE (Immediately Invoked Function Expression) is a function that runs the moment it's defined — `(function(j) { ... })(i)`. Here it creates a new scope per iteration, capturing the current value of `i` as `j`.
 ```js
 for (var i = 0; i < 3; i++) {
   (function (j) {

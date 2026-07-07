@@ -724,9 +724,7 @@ prefetch — fetches when the browser is idle (low priority, future navigation m
 
 ---
 
----
-
-**Q25. What is the output?**
+### Q25. `requestAnimationFrame` vs `setInterval` for animations
 
 ```js
 // Approach 1 — BAD
@@ -769,7 +767,7 @@ function
 
 ---
 
-**Q26. What is the output?**
+### Q26. Web Workers — keeping the main thread responsive
 
 ```js
 // Without Web Worker — blocks main thread
@@ -810,7 +808,7 @@ JavaScript is single-threaded — heavy sync computation blocks the event loop, 
 
 ---
 
-**Q27. What is the output?**
+### Q27. `will-change` — GPU compositing layer
 
 ```js
 // Measuring paint performance
