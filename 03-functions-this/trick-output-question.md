@@ -1,4 +1,4 @@
-# Chapter 3: Trick Output Questions — Functions & `this`
+## Chapter 3: Trick Output Questions — Functions & `this`
 
 > Try to predict the output **before** expanding the answer. Each question reflects a real interview scenario.
 
@@ -807,6 +807,147 @@ Bob
 - `fn.call(alice)` — `fn` is bound to `bob` via `bind`. `bind` cannot be overridden by `call` → still `this = bob` → `'Bob'`
 
 > **Key rule:** `bind` creates a permanently bound function. `call` and `apply` cannot override it.
+
+</details>
+
+---
+
+---
+
+## Generator Functions
+
+---
+
+**Q25. What is the output?**
+
+```js
+function* counter() {
+  console.log('before 1');
+  yield 1;
+  console.log('before 2');
+  yield 2;
+  console.log('done');
+}
+
+const gen = counter();
+console.log(gen.next().value);
+console.log(gen.next().value);
+console.log(gen.next().done);
+```
+
+<details>
+<summary>Show Output & Explanation</summary>
+
+```
+before 1
+1
+before 2
+2
+done
+true
+```
+
+**Explanation:**  
+Generators are lazy — code only runs when `.next()` is called. Each `yield` pauses execution and returns `{ value, done }`. After the last `yield`, calling `.next()` runs to completion and returns `{ value: undefined, done: true }`.
+
+> **Common Mistake:** Assuming the generator body runs immediately on creation. It doesn't — `counter()` just creates the iterator; execution starts only on the first `.next()` call.
+
+</details>
+
+---
+
+**Q26. What is the output?**
+
+```js
+function* gen() {
+  yield 1;
+  return 'end';
+  yield 2;
+}
+
+const it = gen();
+console.log(it.next());
+console.log(it.next());
+console.log(it.next());
+```
+
+<details>
+<summary>Show Output & Explanation</summary>
+
+```
+{ value: 1, done: false }
+{ value: 'end', done: true }
+{ value: undefined, done: true }
+```
+
+**Explanation:**  
+`return` inside a generator signals completion — `done: true` and the return value. Any `yield` after `return` is unreachable. Subsequent calls after done return `{ value: undefined, done: true }`.
+
+> **Common Mistake:** Thinking `yield 2` would execute because it's in the function body. Once `return` is hit, the generator is exhausted.
+
+</details>
+
+---
+
+**Q27. What is the output?**
+
+```js
+function* range(start, end) {
+  for (let i = start; i <= end; i++) {
+    yield i;
+  }
+}
+
+const nums = [...range(1, 3)];
+console.log(nums);
+console.log([...range(1, 3)].reduce((a, b) => a + b));
+```
+
+<details>
+<summary>Show Output & Explanation</summary>
+
+```
+[1, 2, 3]
+6
+```
+
+**Explanation:**  
+Generators implement the iterator protocol, so spread (`...`) and `for...of` work naturally. Each call to spread creates a fresh iterator from the generator function. `reduce` sums `1+2+3 = 6`.
+
+> **Common Mistake:** Assuming you can reuse the same generator iterator multiple times. Generators are single-use — once exhausted, re-spread the function call, not the iterator.
+
+</details>
+
+---
+
+**Q28. What is the output?**
+
+```js
+function* dialog() {
+  const name = yield 'What is your name?';
+  const age = yield `Hello ${name}! How old are you?`;
+  return `${name} is ${age} years old.`;
+}
+
+const it = dialog();
+console.log(it.next().value);
+console.log(it.next('Alice').value);
+console.log(it.next(30).value);
+```
+
+<details>
+<summary>Show Output & Explanation</summary>
+
+```
+What is your name?
+Hello Alice! How old are you?
+Alice is 30 years old.
+```
+
+**Explanation:**  
+You can pass values back INTO a generator via `.next(value)`. The passed value becomes the result of the `yield` expression. First `.next()` has no argument (the first yield's result is never used as a value here). Second `.next('Alice')` resumes — `'Alice'` becomes `name`. Third `.next(30)` — `30` becomes `age`.
+
+> **Common Mistake:** Passing a value to the first `.next()` call expecting it to be used — it's ignored because no `yield` expression has run yet to receive it.
 
 </details>
 

@@ -1,4 +1,4 @@
-# Chapter 9: Browser APIs & Event System — Trick Output Questions
+## Chapter 9: Browser APIs & Event System — Trick Output Questions
 
 > Self-evaluate first. Predict the output, then reveal the answer.
 
@@ -680,6 +680,151 @@ received: hello from custom event
 ```
 
 `CustomEvent` lets you create and dispatch your own events with arbitrary data in `detail`. `bubbles: true` allows it to propagate up the DOM tree. This is the native browser equivalent of an event emitter — useful for decoupled component communication without a framework.
+
+</details>
+
+---
+
+---
+
+**Q25. What is the output?**
+
+```js
+console.log('1');
+
+requestAnimationFrame(() => {
+  console.log('3: rAF');
+});
+
+setTimeout(() => {
+  console.log('2: timeout');
+}, 0);
+
+console.log('1 end');
+```
+
+<details>
+<summary>Show Output & Explanation</summary>
+
+```
+1
+1 end
+2: timeout
+3: rAF
+```
+
+**Explanation:**  
+`requestAnimationFrame` callbacks fire just before the browser paints the next frame (~16ms at 60fps). `setTimeout(fn, 0)` fires as a macrotask and typically runs before the next paint. So the order is: synchronous code → microtasks → macrotasks (setTimeout) → rAF (before paint) → paint. In practice rAF fires at the next vsync, after pending macrotasks.
+
+> **Common Mistake:** Using `setTimeout(fn, 16)` for animation — it's unreliable and causes jank. `requestAnimationFrame` is synchronized with the display refresh rate, giving smooth 60fps animation automatically.
+
+</details>
+
+---
+
+**Q26. What is the output?**
+
+```js
+let rafId;
+let count = 0;
+
+function animate() {
+  count++;
+  console.log('frame', count);
+  if (count < 3) {
+    rafId = requestAnimationFrame(animate);
+  }
+}
+
+rafId = requestAnimationFrame(animate);
+// Assume 3 frames pass
+```
+
+<details>
+<summary>Show Output & Explanation</summary>
+
+```
+frame 1
+frame 2
+frame 3
+```
+
+**Explanation:**  
+`requestAnimationFrame` schedules a single callback for the next frame — to animate continuously, you recursively call `rAF` inside the callback. The loop stops when `count >= 3`. `cancelAnimationFrame(rafId)` can stop it at any point.
+
+> **Common Mistake:** Calling `requestAnimationFrame` in a loop or `setInterval` for animation — rAF is self-scheduling via recursion; calling it multiple times creates multiple animation loops.
+
+</details>
+
+---
+
+**Q27. What is the output?**
+
+```js
+console.log('start');
+
+fetch('https://api.example.com/data')
+  .then(res => {
+    console.log('status:', res.ok);
+    return res.json();
+  })
+  .then(data => console.log('data received'))
+  .catch(err => console.log('error:', err.message));
+
+console.log('end');
+```
+
+<details>
+<summary>Show Output & Explanation</summary>
+
+```
+start
+end
+status: true
+data received
+```
+
+**Explanation:**  
+`fetch` is async — it returns a Promise immediately without blocking. Synchronous code (`'end'`) runs first. On success: the first `.then` fires with the Response object (`res.ok` is `true` for 2xx), then `.json()` returns another Promise, then the second `.then` fires with parsed data. Note: `fetch` only rejects on network failure, NOT on HTTP error status codes (404, 500 still resolve with `res.ok = false`).
+
+> **Common Mistake:** Assuming `fetch` rejects on 404/500. It doesn't — always check `res.ok` or `res.status` in the first `.then`. Only network failures (no connection) trigger `.catch`.
+
+</details>
+
+---
+
+**Q28. What is the output?**
+
+```js
+console.log('initial:', location.pathname);
+
+history.pushState({ page: 1 }, '', '/page1');
+console.log('after push:', location.pathname);
+
+history.pushState({ page: 2 }, '', '/page2');
+console.log('after second push:', location.pathname);
+
+history.back(); // triggers popstate asynchronously
+
+window.addEventListener('popstate', (e) => {
+  console.log('popstate:', location.pathname, 'state:', e.state?.page);
+});
+```
+
+<details>
+<summary>Show Output & Explanation</summary>
+
+```
+initial: /
+after push: /page1
+after second push: /page2
+popstate: /page1 state: 1
+```
+
+**Explanation:**  
+`pushState` changes the URL and adds a history entry WITHOUT a page reload — core to SPA routing. `replaceState` changes the URL without adding an entry. `history.back()` is asynchronous — the `popstate` event fires when navigation completes. `e.state` contains the state object passed to `pushState`.
+
+> **Common Mistake:** Expecting `pushState` to trigger a `popstate` event — it doesn't. `popstate` only fires on navigation (back/forward button or `history.back()`/`history.go()`), not on `pushState`/`replaceState` calls.
 
 </details>
 

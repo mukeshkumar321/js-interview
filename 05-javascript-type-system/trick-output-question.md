@@ -1,4 +1,4 @@
-# Chapter 5: Trick Output Questions — JavaScript Type System
+## Chapter 5: Trick Output Questions — JavaScript Type System
 
 > Try to predict the output **before** expanding the answer. Each question reflects a real interview scenario.
 
@@ -838,6 +838,72 @@ false
 - `a === b` → different types → `false`
 
 > **Summary:** `+` uniquely favors string concatenation. All other operators (`-`, `*`, `/`, `>`, `<`) coerce to numbers. `==` coerces strings to numbers for number comparisons.
+
+</details>
+
+---
+
+---
+
+## Floating Point & Number Precision
+
+---
+
+**Q25. What is the output?**
+
+```js
+console.log(0.1 + 0.2 === 0.3);
+console.log(0.1 + 0.2);
+console.log(Math.abs(0.1 + 0.2 - 0.3) < Number.EPSILON);
+console.log(Number.EPSILON);
+```
+
+<details>
+<summary>Show Output & Explanation</summary>
+
+```
+false
+0.30000000000000004
+true
+2.220446049250313e-16
+```
+
+**Explanation:**  
+IEEE 754 double-precision floating point cannot represent 0.1 or 0.2 exactly. Their sum is `0.30000000000000004`. Direct `===` comparison fails. The correct way to compare floats is checking if the difference is smaller than `Number.EPSILON` (the smallest difference between two representable doubles).
+
+> **Common Mistake:** Using `===` to compare floating point calculations. Always use `Number.EPSILON` or `toFixed()` for monetary/precise comparisons.
+
+</details>
+
+---
+
+**Q26. What is the output?**
+
+```js
+console.log(parseInt('08'));
+console.log(parseInt('08', 10));
+console.log(parseInt('0x10'));
+console.log(parseInt('10', 2));
+console.log(parseInt('3.9'));
+console.log(['1', '2', '3'].map(parseInt));
+```
+
+<details>
+<summary>Show Output & Explanation</summary>
+
+```
+8
+8
+16
+2
+3
+[1, NaN, NaN]
+```
+
+**Explanation:**  
+`parseInt` without a radix defaults to 10 in modern engines (legacy engines treated `08` as octal = 0). `0x10` is auto-detected as hex = 16. `parseInt('10', 2)` reads `10` in binary = 2. `parseInt` truncates, doesn't round. `['1','2','3'].map(parseInt)` passes `(value, index, array)` — so calls are `parseInt('1',0)`, `parseInt('2',1)`, `parseInt('3',2)`. Radix `0` is treated as 10 → `1`. Radix `1` is invalid → `NaN`. `parseInt('3', 2)` — `3` is not a valid binary digit → `NaN`.
+
+> **Common Mistake:** Passing `parseInt` directly to `.map()` without wrapping it — the index becomes the radix argument.
 
 </details>
 

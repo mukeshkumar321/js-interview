@@ -1,4 +1,4 @@
-# Chapter 6: Trick Output Questions — ES6+ Features
+## Chapter 6: Trick Output Questions — ES6+ Features
 
 > Try to predict the output **before** expanding the answer. Each question reflects a real interview scenario.
 
@@ -761,6 +761,250 @@ ReferenceError: hobbies is not defined
 - `hobbies` → was used as a path descriptor (renamed), NOT declared as a variable → `ReferenceError`
 
 > **Complex destructuring.** The intermediate names in rename-style destructuring (`hobbies:`, `address:`) are paths, not variable declarations.
+
+</details>
+
+---
+
+## Promise.allSettled and Promise.any
+
+---
+
+**Q25. What is the output?**
+
+```js
+const p1 = Promise.resolve('success');
+const p2 = Promise.reject('error');
+const p3 = Promise.resolve('also success');
+
+Promise.allSettled([p1, p2, p3]).then(results => {
+  results.forEach(r => console.log(r.status, r.value ?? r.reason));
+});
+```
+
+<details>
+<summary>Show Output & Explanation</summary>
+
+```
+fulfilled success
+rejected error
+fulfilled also success
+```
+
+**Explanation:**  
+`Promise.allSettled` waits for ALL promises regardless of outcome. Each result has `status: 'fulfilled'` with `value`, or `status: 'rejected'` with `reason`. Unlike `Promise.all`, it never short-circuits on rejection — you always get results for every promise.
+
+> **Common Mistake:** Using `Promise.all` when you want to run multiple independent operations and handle each result — `Promise.all` rejects immediately on the first failure, losing all other results.
+
+</details>
+
+---
+
+**Q26. What is the output?**
+
+```js
+const p1 = Promise.reject('err1');
+const p2 = Promise.reject('err2');
+const p3 = Promise.resolve('first success');
+const p4 = Promise.resolve('second success');
+
+Promise.any([p1, p2, p3, p4])
+  .then(v => console.log('resolved:', v))
+  .catch(e => console.log('all rejected:', e.message));
+```
+
+<details>
+<summary>Show Output & Explanation</summary>
+
+```
+resolved: first success
+```
+
+**Explanation:**  
+`Promise.any` resolves with the FIRST fulfilled promise, ignoring rejections. If ALL reject, it throws an `AggregateError`. Here `p3` is the first to fulfill (p1 and p2 are already rejected), so `'first success'` wins.
+
+> **Common Mistake:** Confusing `Promise.any` with `Promise.race` — `race` resolves/rejects with the FIRST settled promise (including rejections), while `any` only resolves on fulfilment and needs ALL to reject before it rejects.
+
+</details>
+
+---
+
+## Object.fromEntries
+
+---
+
+**Q27. What is the output?**
+
+```js
+const entries = [['a', 1], ['b', 2], ['c', 3]];
+const obj = Object.fromEntries(entries);
+console.log(obj);
+
+const original = { x: 10, y: 20, z: 30 };
+const doubled = Object.fromEntries(
+  Object.entries(original).map(([k, v]) => [k, v * 2])
+);
+console.log(doubled);
+```
+
+<details>
+<summary>Show Output & Explanation</summary>
+
+```
+{ a: 1, b: 2, c: 3 }
+{ x: 20, y: 40, z: 60 }
+```
+
+**Explanation:**  
+`Object.fromEntries()` converts an iterable of `[key, value]` pairs into an object — it's the inverse of `Object.entries()`. The `entries → map → fromEntries` pattern is the idiomatic way to transform object values without mutation.
+
+> **Common Mistake:** Using `reduce` to rebuild an object after `Object.entries().map()` — `Object.fromEntries` is cleaner and more readable.
+
+</details>
+
+---
+
+**Q28. What is the output?**
+
+```js
+const map = new Map([['name', 'Alice'], ['age', 30], ['role', 'dev']]);
+const obj = Object.fromEntries(map);
+console.log(obj.name);
+console.log(typeof obj);
+console.log(obj instanceof Map);
+```
+
+<details>
+<summary>Show Output & Explanation</summary>
+
+```
+Alice
+object
+false
+```
+
+**Explanation:**  
+`Object.fromEntries` also accepts a `Map` directly (Maps are iterable of `[key, value]` pairs). The result is a plain object, not a Map — `instanceof Map` is `false`.
+
+> **Common Mistake:** Trying to use spread (`{...map}`) to convert a Map to an object — spread on a Map doesn't work as expected because Maps aren't plain iterables in the key-value sense for spread syntax.
+
+</details>
+
+---
+
+## Logical Assignment Operators
+
+---
+
+**Q29. What is the output?**
+
+```js
+let a = null;
+let b = 0;
+let c = 'hello';
+
+a ??= 'default';
+b ||= 'fallback';
+c &&= c.toUpperCase();
+
+console.log(a);
+console.log(b);
+console.log(c);
+```
+
+<details>
+<summary>Show Output & Explanation</summary>
+
+```
+default
+fallback
+HELLO
+```
+
+**Explanation:**  
+`??=` assigns only if the left side is `null`/`undefined` (nullish). `||=` assigns if the left side is falsy (`0` is falsy). `&&=` assigns only if the left side is truthy — it replaces the truthy value with the right side. So: `a` was null → gets `'default'`; `b` was `0` (falsy) → gets `'fallback'`; `c` was `'hello'` (truthy) → gets `'HELLO'`.
+
+> **Common Mistake:** Treating `??=` and `||=` as identical. `b = 0; b ??= 'x'` leaves `b` as `0` (0 is not nullish), but `b ||= 'x'` changes it to `'x'` (0 is falsy).
+
+</details>
+
+---
+
+**Q30. What is the output?**
+
+```js
+const config = { debug: false, timeout: 0, name: '' };
+
+config.debug ??= true;
+config.timeout ??= 5000;
+config.name ??= 'default';
+
+console.log(config.debug);
+console.log(config.timeout);
+console.log(config.name);
+```
+
+<details>
+<summary>Show Output & Explanation</summary>
+
+```
+false
+0
+
+```
+
+**Explanation:**  
+None of the properties are `null` or `undefined` — they're `false`, `0`, and `''`, which are valid values. `??=` only triggers on `null`/`undefined`, so nothing changes. This demonstrates why `??=` is safer than `||=` for config defaults — it respects intentional falsy values.
+
+> **Common Mistake:** Using `config.debug = config.debug ?? true` (verbose) vs `config.debug ??= true` (concise). They're equivalent, but `??=` is the modern shorthand.
+
+</details>
+
+---
+
+## Proxy and Reflect
+
+---
+
+**Q31. What is the output?**
+
+```js
+const handler = {
+  get(target, key) {
+    return key in target ? target[key] : `Property '${key}' not found`;
+  },
+  set(target, key, value) {
+    if (typeof value !== 'number') throw new TypeError('Only numbers allowed');
+    target[key] = value;
+    return true;
+  }
+};
+
+const obj = new Proxy({}, handler);
+obj.x = 42;
+console.log(obj.x);
+console.log(obj.y);
+
+try {
+  obj.z = 'hello';
+} catch (e) {
+  console.log(e.message);
+}
+```
+
+<details>
+<summary>Show Output & Explanation</summary>
+
+```
+42
+Property 'y' not found
+Only numbers allowed
+```
+
+**Explanation:**  
+`Proxy` wraps an object and intercepts operations via traps. The `get` trap returns a custom message for missing keys instead of `undefined`. The `set` trap validates the value type before storing. `return true` in `set` is required — omitting it causes a `TypeError` in strict mode.
+
+> **Common Mistake:** Forgetting `return true` in the `set` trap. Without it, the proxy throws `TypeError: 'set' on proxy: trap returned falsish`.
 
 </details>
 

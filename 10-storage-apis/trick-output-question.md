@@ -1,4 +1,4 @@
-# Chapter 10: Storage APIs — Trick Output Questions
+## Chapter 10: Storage APIs — Trick Output Questions
 
 > Self-evaluate first. Predict the output, then reveal the answer.
 
@@ -601,6 +601,118 @@ window.addEventListener('storage', e => {
 ```
 
 The `storage` event fires in **all other tabs** of the same origin when `localStorage` changes. Setting a `'logout'` key triggers all other tabs to clear their session. The current tab (Tab A) must clear its own session directly (the event doesn't fire in the originating tab). This is how single-origin multi-tab logout is implemented.
+
+</details>
+
+---
+
+---
+
+**Q25. What is the output?**
+
+```js
+// In a Service Worker
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open('v1').then((cache) => {
+      console.log('cache opened');
+      return cache.addAll(['/index.html', '/style.css']);
+    })
+  );
+});
+
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    caches.match(event.request).then((cached) => {
+      console.log('cache hit:', !!cached);
+      return cached || fetch(event.request);
+    })
+  );
+});
+```
+
+<details>
+<summary>Show Output & Explanation</summary>
+
+```
+cache opened
+cache hit: true
+```
+
+**Explanation:**  
+The Service Worker `install` event caches assets. `event.waitUntil` keeps the SW installing until the promise resolves. On fetch, `caches.match` checks for a cached response — returns it if found (cache-first strategy), otherwise falls back to `fetch`. Cache hit for `/index.html` is `true` since it was pre-cached during install.
+
+> **Common Mistake:** Not calling `event.waitUntil` in the `install` handler — without it the SW activates before caching is complete. Also, `caches.match` returns `undefined` (not a rejected Promise) for a miss, so you must check `|| fetch(event.request)`.
+
+</details>
+
+---
+
+**Q26. What is the output?**
+
+```js
+const CACHE_NAME = 'app-v2';
+const OLD_CACHES = ['app-v1'];
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames
+          .filter(name => OLD_CACHES.includes(name))
+          .map(name => {
+            console.log('deleting old cache:', name);
+            return caches.delete(name);
+          })
+      );
+    })
+  );
+});
+```
+
+<details>
+<summary>Show Output & Explanation</summary>
+
+```
+deleting old cache: app-v1
+```
+
+**Explanation:**  
+When deploying a new Service Worker version, the `activate` event is used to clean up old caches. `caches.keys()` returns all cache storage names. We filter for caches we want to remove (old versions) and delete them. Without this cleanup, old caches accumulate and waste storage quota.
+
+> **Common Mistake:** Trying to clean up old caches in the `install` event — at install time, the old SW is still controlling the page. Cleanup should happen in `activate`, after the new SW takes control.
+
+</details>
+
+---
+
+**Q27. What is the output?**
+
+```js
+(async () => {
+  const estimate = await navigator.storage.estimate();
+  const usedMB = (estimate.usage / 1024 / 1024).toFixed(2);
+  const quotaMB = (estimate.quota / 1024 / 1024).toFixed(2);
+  
+  console.log('Used:', usedMB + 'MB');
+  console.log('Quota:', quotaMB + 'MB');
+  console.log('Usage %:', ((estimate.usage / estimate.quota) * 100).toFixed(1) + '%');
+})();
+```
+
+<details>
+<summary>Show Output & Explanation</summary>
+
+```
+Used: 2.45MB
+Quota: 1024.00MB
+Usage %: 0.2%
+```
+
+**Explanation:**  
+`navigator.storage.estimate()` returns a Promise with `usage` (bytes currently used) and `quota` (estimated available bytes). This is essential before large writes — if you exceed quota, `localStorage.setItem` throws and IndexedDB writes fail silently or with errors. The quota is typically a percentage of available disk space (Chrome: up to 60%).
+
+> **Common Mistake:** Storing large amounts of data without checking quota first. Always estimate before heavy IndexedDB writes in production apps.
 
 </details>
 

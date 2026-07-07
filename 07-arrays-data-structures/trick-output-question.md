@@ -1,4 +1,4 @@
-# Chapter 7: Arrays & Data Structures — Trick Output Questions
+## Chapter 7: Arrays & Data Structures — Trick Output Questions
 
 > Self-evaluate first. Predict the output, then reveal the answer.
 
@@ -570,6 +570,78 @@ false
 ```
 
 `Map` safely stores any string as a key including `'constructor'` and `'__proto__'`. With the plain object, `obj['constructor'] = 'unsafe?'` creates an **own property** named `'constructor'` that **shadows** `Object.prototype.constructor`. So `obj['constructor']` now returns the string `'unsafe?'`, not the `Object` function — making `obj['constructor'] === Object` → `false`. `Map` is safer for dynamic/arbitrary keys.
+
+</details>
+
+---
+
+---
+
+## Array.at() and Modern Methods
+
+---
+
+**Q25. What is the output?**
+
+```js
+const arr = [10, 20, 30, 40, 50];
+
+console.log(arr.at(0));
+console.log(arr.at(-1));
+console.log(arr.at(-2));
+console.log(arr[arr.length - 1] === arr.at(-1));
+console.log(arr.at(10));
+```
+
+<details>
+<summary>Show Output & Explanation</summary>
+
+```
+10
+50
+40
+true
+undefined
+```
+
+**Explanation:**  
+`Array.at()` supports negative indices — `-1` maps to the last element, `-2` to second-last, etc. It's cleaner than `arr[arr.length - 1]`. Out-of-bounds returns `undefined`, same as bracket notation.
+
+> **Common Mistake:** Using `arr[-1]` expecting the last element — bracket notation with `-1` looks up the property `"-1"` which doesn't exist, returning `undefined` regardless.
+
+</details>
+
+---
+
+**Q26. What is the output?**
+
+```js
+const items = [
+  { name: 'apple', type: 'fruit' },
+  { name: 'banana', type: 'fruit' },
+  { name: 'carrot', type: 'vegetable' },
+  { name: 'grape', type: 'fruit' },
+];
+
+const grouped = Object.groupBy(items, item => item.type);
+console.log(Object.keys(grouped));
+console.log(grouped.fruit.length);
+console.log(grouped.vegetable[0].name);
+```
+
+<details>
+<summary>Show Output & Explanation</summary>
+
+```
+['fruit', 'vegetable']
+3
+carrot
+```
+
+**Explanation:**  
+`Object.groupBy()` (ES2024) groups array elements by a key returned from the callback. The result is a null-prototype object where each key holds an array of matching elements. Original order within groups is preserved.
+
+> **Common Mistake:** Using `Array.prototype.reduce` to manually group — `Object.groupBy` is now the idiomatic approach and doesn't require a polyfill in modern environments.
 
 </details>
 

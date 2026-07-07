@@ -1,4 +1,4 @@
-# Chapter 11: Performance Optimization — Trick Output Questions
+## Chapter 11: Performance Optimization — Trick Output Questions
 
 > Self-evaluate first. Predict the output, then reveal the answer.
 
@@ -719,6 +719,136 @@ prefetch — fetches when the browser is idle (low priority, future navigation m
 ```
 
 `preload` tells the browser: "I need this resource NOW on the current page — fetch it at high priority." Used for critical above-the-fold resources (hero images, fonts, critical CSS). `prefetch` tells the browser: "The user might navigate here next — fetch this when idle." Used for next-page chunks in code splitting. Using `preload` for everything defeats the purpose.
+
+</details>
+
+---
+
+---
+
+**Q25. What is the output?**
+
+```js
+// Approach 1 — BAD
+function animateBad() {
+  let pos = 0;
+  setInterval(() => {
+    pos += 5;
+    document.getElementById('box').style.left = pos + 'px';
+  }, 16);
+}
+
+// Approach 2 — GOOD
+function animateGood() {
+  let pos = 0;
+  function frame() {
+    pos += 5;
+    document.getElementById('box').style.left = pos + 'px';
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+console.log(typeof requestAnimationFrame);
+// Which approach is better for smooth animation?
+```
+
+<details>
+<summary>Show Output & Explanation</summary>
+
+```
+function
+```
+
+**Explanation:**  
+`requestAnimationFrame` is a browser-provided function (typeof = `'function'`). `setInterval(fn, 16)` fires every 16ms regardless of whether the browser is ready to paint, causing dropped frames or battery drain in background tabs. `rAF` automatically pauses in hidden tabs, syncs with the display refresh rate, and batches with the browser's rendering pipeline for smooth 60fps animation.
+
+> **Common Mistake:** Using `setInterval` or `setTimeout` for animations — they're timer-based and not synchronized with the browser's paint cycle, causing jank and unnecessary CPU usage when the tab is hidden.
+
+</details>
+
+---
+
+**Q26. What is the output?**
+
+```js
+// Without Web Worker — blocks main thread
+function heavyCalc(n) {
+  let result = 0;
+  for (let i = 0; i < n; i++) result += Math.sqrt(i);
+  return result;
+}
+
+console.log('before calc');
+const result = heavyCalc(100_000_000); // blocks UI for ~300ms
+console.log('after calc:', result.toFixed(2));
+console.log('is UI responsive during calc?', false);
+
+// With Web Worker — non-blocking
+const worker = new Worker('heavy.js'); // runs heavyCalc in background
+worker.postMessage(100_000_000);
+worker.onmessage = e => console.log('worker result:', e.data.toFixed(2));
+console.log('is UI responsive during worker calc?', true);
+```
+
+<details>
+<summary>Show Output & Explanation</summary>
+
+```
+before calc
+after calc: 666666661.84
+is UI responsive during calc? false
+is UI responsive during worker calc? true
+```
+
+**Explanation:**  
+JavaScript is single-threaded — heavy sync computation blocks the event loop, freezing the UI. Web Workers run in a separate OS thread, so heavy computation doesn't block user interactions. `postMessage` transfers data to the worker; results come back via `onmessage`. Trade-off: Workers have overhead (thread spawn, message serialization) — use for tasks >100ms.
+
+> **Common Mistake:** Running large data processing (image manipulation, sorting millions of items, complex math) on the main thread. Move anything that takes >50ms to a Web Worker to keep the main thread free for user input.
+
+</details>
+
+---
+
+**Q27. What is the output?**
+
+```js
+// Measuring paint performance
+const box = document.getElementById('box');
+
+// Before optimization
+console.time('without will-change');
+box.style.transform = 'translateX(0)';
+// ... 1000 animation frames
+console.timeEnd('without will-change');
+
+// After optimization
+box.style.willChange = 'transform';
+console.time('with will-change');
+box.style.transform = 'translateX(0)';
+// ... 1000 animation frames
+console.timeEnd('with will-change');
+
+console.log('will-change promotes element to:', 'compositor layer');
+console.log('skips:', 'layout and paint phases');
+console.log('directly runs:', 'compositing');
+```
+
+<details>
+<summary>Show Output & Explanation</summary>
+
+```
+without will-change: ~8ms
+with will-change: ~2ms
+will-change promotes element to: compositor layer
+skips: layout and paint phases
+directly runs: compositing
+```
+
+**Explanation:**  
+`will-change: transform` (or `opacity`) tells the browser to promote the element to its own GPU compositor layer ahead of time. Animating `transform`/`opacity` on a composited layer skips layout and paint — the GPU handles it directly. This is why CSS transforms outperform `top`/`left` animations. Apply `will-change` sparingly — each composited layer uses GPU memory.
+
+> **Common Mistake:** Applying `will-change: transform` to everything "for performance" — overuse causes excessive GPU memory consumption and can degrade performance. Only use it for elements you KNOW will animate.
 
 </details>
 
