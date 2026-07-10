@@ -11,10 +11,6 @@
 - [Event Listeners](#event-listeners)
 - [Modern Browser APIs](#modern-browser-apis)
 - [Browser Lifecycle & Performance](#browser-lifecycle--performance)
-- [requestAnimationFrame (rAF)](#requestanimationframe-raf)
-- [fetch API](#fetch-api)
-- [CustomEvent — Dispatching Your Own Events](#customevent--dispatching-your-own-events)
-- [History API — SPA Routing](#history-api--spa-routing)
 
 ---
 
@@ -525,7 +521,7 @@ window.addEventListener('load', () => {
 
 **Best practice:** Use `DOMContentLoaded` for DOM manipulation (faster). Use `load` only when you specifically need images/external resources to be ready.
 
-> **Interview Note:** Scripts with `defer` attribute run **before** `DOMContentLoaded` fires (after HTML parsing completes, but before the event). `DOMContentLoaded` only fires after all deferred scripts have executed. Scripts with `async` run as soon as they download, in no guaranteed order. `defer` is the modern preferred approach for non-critical scripts.
+> **Interview Note:** Scripts with `defer` attribute run after `DOMContentLoaded`. Scripts with `async` run as soon as they download. `defer` is the modern preferred approach for non-critical scripts.
 
 </details>
 
@@ -585,140 +581,6 @@ for (let i = 0; i < 1000; i++) {
 
 ---
 
----
-
-## requestAnimationFrame (rAF)
-
-`requestAnimationFrame` schedules a callback to run just before the browser paints the next frame (~60fps = every ~16.7ms).
-
-```js
-function animate() {
-  // update positions, styles, etc.
-  element.style.transform = `translateX(${pos}px)`;
-  requestAnimationFrame(animate); // schedule next frame
-}
-
-requestAnimationFrame(animate); // start the loop
-```
-
-**Why rAF over setTimeout:**
-
-| | `setTimeout(fn, 16)` | `requestAnimationFrame` |
-|---|---|---|
-| Sync with display | ❌ No | ✅ Yes |
-| Pauses in hidden tab | ❌ No | ✅ Yes (saves battery) |
-| Frame timing | ❌ Drifts | ✅ Consistent |
-| Smooth 60fps | ❌ Unreliable | ✅ Guaranteed |
-
-**Cancelling:**
-```js
-const id = requestAnimationFrame(myCallback);
-cancelAnimationFrame(id); // stop before it fires
-```
-
-**Execution order:** sync → microtasks → macrotasks (setTimeout) → **rAF** → Paint
-
----
-
-## fetch API
-
-`fetch` is the modern way to make HTTP requests. It returns a Promise.
-
-```js
-// Basic GET
-const res = await fetch('https://api.example.com/users');
-const users = await res.json();
-```
-
-**Critical: fetch only rejects on network failure**
-
-```js
-const res = await fetch('/api/data');
-
-if (!res.ok) {
-  // 404, 500, etc. — fetch does NOT reject here!
-  throw new Error(`HTTP error: ${res.status}`);
-}
-
-const data = await res.json();
-```
-
-**Common options:**
-```js
-fetch('/api/users', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ name: 'Alice' }),
-});
-```
-
-**Aborting a fetch:**
-```js
-const controller = new AbortController();
-fetch('/api/data', { signal: controller.signal });
-controller.abort(); // cancels the request
-```
-
----
-
-## CustomEvent — Dispatching Your Own Events
-
-`CustomEvent` lets you create and fire custom DOM events with a data payload:
-
-```js
-// Create the event
-const event = new CustomEvent('userLoggedIn', {
-  detail: { userId: 42, role: 'admin' },
-  bubbles: true,      // propagates up the DOM
-  cancelable: true,
-});
-
-// Listen for it
-document.addEventListener('userLoggedIn', (e) => {
-  console.log('User:', e.detail.userId); // 42
-});
-
-// Fire it
-document.dispatchEvent(event);
-```
-
-**`detail`** is where you put your custom data — accessible via `e.detail`.
-
-**Use cases:** Component communication, micro-frontend events, analytics triggers.
-
-> **vs plain Event:** `new Event('name')` doesn't support `detail`. Always use `CustomEvent` when you need to pass data.
-
----
-
-## History API — SPA Routing
-
-The History API lets you change the URL without reloading the page — the foundation of SPA routing (React Router, Vue Router all use this).
-
-```js
-// Add a new history entry + change URL
-history.pushState({ page: 'home' }, '', '/home');
-
-// Replace current entry (no new history entry)
-history.replaceState({ page: 'home' }, '', '/home');
-
-// Navigate back/forward
-history.back();
-history.forward();
-history.go(-2); // go back 2 entries
-```
-
-**popstate event** — fires when user navigates (back/forward), NOT on pushState:
-```js
-window.addEventListener('popstate', (e) => {
-  console.log('navigated to:', location.pathname);
-  console.log('state:', e.state); // { page: 'home' }
-});
-```
-
-> **Key gotcha:** `pushState` does NOT fire `popstate`. You must handle the URL update yourself in pushState, and use `popstate` only for browser back/forward.
-
----
-
 ## Quick Reference Cheat Sheet
 
 ```
@@ -745,26 +607,6 @@ Observer APIs:
 
 DOMContentLoaded → HTML parsed, DOM ready
 load             → all resources (images, CSS) fully loaded
-
-requestAnimationFrame:
-  Syncs with browser paint (~60fps) | Pauses in hidden tab
-  Order: sync → microtasks → macrotasks → rAF → Paint
-  cancelAnimationFrame(id) to stop
-
-fetch:
-  Returns a Promise | Only rejects on network failure
-  Always check res.ok for HTTP errors (404, 500 don't reject)
-  AbortController → controller.abort() cancels the request
-
-CustomEvent:
-  new CustomEvent('name', { detail: {}, bubbles: true })
-  e.detail → custom data payload
-  dispatchEvent(event) → fire it
-
-History API:
-  pushState(state, '', '/path') → change URL, add history entry
-  replaceState(state, '', '/path') → change URL, no new entry
-  popstate event → fires on back/forward, NOT on pushState
 ```
 
 ---
