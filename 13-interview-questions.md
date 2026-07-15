@@ -83,50 +83,40 @@ These questions cover JS fundamentals, closures, async, error handling, modules,
 
 ---
 
-# Functions
+# Modern JavaScript (ES6+)
 
-## Function Fundamentals
+## Destructuring & Spread
 
-61. What is the difference between a Function Declaration and a Function Expression?
-62. What is an Arrow Function?
-63. What are the differences between Arrow Functions and Regular Functions?
-64. Why can't Arrow Functions be used as constructors?
-65. What is a Generator Function?
-66. What is `yield`?
-67. What are the use cases of Generator Functions?
-68. What is a Pure Function?
-69. What is a Side Effect?
-70. What is a Higher-Order Function (HOF)?
-71. What is Currying?
+61. What is Destructuring?
+62. What is the difference between `Array` and `Object Destructuring`?
+63. What are Default Values in Destructuring?
+64. What is the Spread Operator?
+65. What is the Rest Parameter?
+66. What is the difference between Spread and Rest?
+67. How do you deep clone an object?
+68. What are the limitations of the Spread Operator for cloning?
+69. What are computed property names?
+70. What are enhanced object literals?
 
----
+## Optional Chaining & Nullish Coalescing
 
-# Prototypes & Inheritance
+71. What is Optional Chaining (`?.`)?
+72. What is the Nullish Coalescing operator (`??`)?
+73. What is the difference between `??` and `||`?
+74. What are Logical Assignment operators (`&&=`, `||=`, `??=`)?
 
-## Prototypal Inheritance
+## Iterators & Iterables
 
-72. What is a Prototype in JavaScript?
-73. What is the Prototype Chain?
-74. How does JavaScript perform property lookup through the Prototype Chain?
-75. What is `Object.create()`?
-76. What is the difference between `__proto__` and `prototype`?
-77. What is the difference between a function's `prototype` property and an object's `[[Prototype]]`?
-78. What happens when you access a property that doesn't exist on an object?
-79. What is `hasOwnProperty()`?
-80. What is the difference between Prototypal and Classical Inheritance?
-81. How do you create inheritance in JavaScript without using ES6 classes?
-
-## Classes
-
-82. What are ES6 Classes?
-83. Are ES6 Classes just syntactic sugar?
-84. What is a Constructor?
-85. What is `super()`?
-86. What is the difference between instance methods and static methods?
-87. What is method overriding?
-88. How does `instanceof` work?
-89. What is the difference between `Object.assign()` and the spread operator for objects?
-90. When would you choose Prototypes over ES6 Classes?
+75. What is an Iterable?
+76. What is an Iterator?
+77. What is the Iterator Protocol?
+78. What is a `Symbol.iterator`?
+79. How does `for...of` work internally?
+80. What is the difference between `for...of` and `for...in`?
+81. What is the difference between `Map` and a plain `Object`?
+82. What is a `Set`?
+83. What is a `WeakMap`?
+84. What is a `WeakSet`, and when would you use it?
 
 ---
 
@@ -134,61 +124,76 @@ These questions cover JS fundamentals, closures, async, error handling, modules,
 
 ## Callbacks & Promises
 
-91. What is a Callback?
-92. What is Callback Hell?
-93. What is a Promise?
-94. What are the three states of a Promise?
-95. What is the difference between `.then()` and `async/await`?
-96. What is `Promise.all()`?
-97. What is `Promise.allSettled()`?
-98. What is `Promise.race()`?
-99. What is `Promise.any()`?
-100. How do you handle errors in Promises?
-101. What is the difference between `Promise.all()`, `Promise.allSettled()`, `Promise.race()`, and `Promise.any()`?
+85. What is a Callback?
+86. What is Callback Hell?
+87. What is a Promise?
+88. What are the three states of a Promise?
+89. What is the difference between `.then()` and `async/await`?
+90. What is `Promise.all()`?
+91. What is `Promise.allSettled()`?
+92. What is `Promise.race()`?
+93. What is `Promise.any()`?
+94. How do you handle errors in Promises?
+95. What is the difference between `Promise.all()`, `Promise.allSettled()`, `Promise.race()`, and `Promise.any()`?
 
 ## Async/Await
 
-102. What is `async/await`?
-103. What does an async function return?
-104. What happens when you `await` a non-`Promise`?
-105. How do you handle errors with `async/await`?
-106. What is the difference between sequential and parallel `await`?
-107. When would you prefer `Promise.all()` over sequential awaits?
-108. What is the problem with using `await` inside `forEach()`?
-109. Why doesn't `Array.prototype.forEach()` work well with `async/await`?
-110. Can you use `await` outside an async function?
+96. What is `async/await`?
+97. What does an async function return?
+98. What happens when you `await` a non-`Promise`?
+99. How do you handle errors with `async/await`?
+100. What is the difference between sequential and parallel `await`?
+101. When would you prefer `Promise.all()` over sequential awaits?
+102. What is the problem with using `await` inside `forEach()`?
+103. Why doesn't `Array.prototype.forEach()` work well with `async/await`?
+104. Can you use `await` outside an async function?
 
 ---
 
-# Error Handling
+# Functions
 
-111. What is the difference between `throw` and `return`?
-112. What happens if you `throw` inside a `try` block?
-113. What does `finally` always do?
-114. Does `finally` run even if there is a `return` inside `try`?
-115. What are the built-in `Error` types in JavaScript?
-116. How do you create a Custom Error class?
-117. How do you distinguish between `Error` types using `instanceof`?
-118. What is the difference between `throw new Error()` and `console.error()`?
-119. How do you handle errors in `async/await` vs `Promises`?
-120. What is an Unhandled Promise Rejection?
-121. How do you catch Unhandled Promise Rejections globally?
-122. When should you throw an error instead of returning a value?
+## Function Fundamentals
+
+105. What is the difference between a Function Declaration and a Function Expression?
+106. What is an Arrow Function?
+107. What are the differences between Arrow Functions and Regular Functions?
+108. Why can't Arrow Functions be used as constructors?
+109. What is a Generator Function?
+110. What is `yield`?
+111. What are the use cases of Generator Functions?
+112. What is a Pure Function?
+113. What is a Side Effect?
+114. What is a Higher-Order Function (HOF)?
+115. What is Currying?
 
 ---
 
-# Modules
+# Prototypes & Inheritance
 
-123. What is the difference between ES Modules and CommonJS?
-124. What is a named export vs a default export?
-125. Can you have multiple default exports in one file?
-126. What is a re-export and when would you use it?
-127. What is a dynamic `import()`?
-128. When would you use dynamic import over static import?
-129. What is tree shaking and how do ES Modules enable it?
-130. Why can't CommonJS be tree-shaken as effectively?
-131. What is a circular dependency and how do ES Modules handle it?
-132. What is the difference between `import` and `require`?
+## Prototypal Inheritance
+
+116. What is a Prototype in JavaScript?
+117. What is the Prototype Chain?
+118. How does JavaScript perform property lookup through the Prototype Chain?
+119. What is `Object.create()`?
+120. What is the difference between `__proto__` and `prototype`?
+121. What is the difference between a function's `prototype` property and an object's `[[Prototype]]`?
+122. What happens when you access a property that doesn't exist on an object?
+123. What is `hasOwnProperty()`?
+124. What is the difference between Prototypal and Classical Inheritance?
+125. How do you create inheritance in JavaScript without using ES6 classes?
+
+## Classes
+
+126. What are ES6 Classes?
+127. Are ES6 Classes just syntactic sugar?
+128. What is a Constructor?
+129. What is `super()`?
+130. What is the difference between instance methods and static methods?
+131. What is method overriding?
+132. How does `instanceof` work?
+133. What is the difference between `Object.assign()` and the spread operator for objects?
+134. When would you choose Prototypes over ES6 Classes?
 
 ---
 
@@ -196,67 +201,62 @@ These questions cover JS fundamentals, closures, async, error handling, modules,
 
 ## Array Methods
 
-133. What is the difference between `map()`, `filter()`, and `reduce()`?
-134. What does `reduce()` return when the array is empty and no initial value is provided?
-135. What is the difference between `forEach()` and `map()`?
-136. What is `flat()` and `flatMap()`?
-137. What is the difference between `find()` and `filter()`?
-138. What is the difference between `some()` and `every()`?
-139. What does `Array.from()` do?
-140. What is the difference between `splice()` and `slice()`?
-141. What is the difference between `push()`/`pop()` and `shift()`/`unshift()`?
-142. How do you remove duplicates from an array?
-143. What is the difference between `Array.isArray()` and `instanceof Array`?
-144. How do you flatten a nested array?
+135. What is the difference between `map()`, `filter()`, and `reduce()`?
+136. What does `reduce()` return when the array is empty and no initial value is provided?
+137. What is the difference between `forEach()` and `map()`?
+138. What is `flat()` and `flatMap()`?
+139. What is the difference between `find()` and `filter()`?
+140. What is the difference between `some()` and `every()`?
+141. What does `Array.from()` do?
+142. What is the difference between `splice()` and `slice()`?
+143. What is the difference between `push()`/`pop()` and `shift()`/`unshift()`?
+144. How do you remove duplicates from an array?
+145. What is the difference between `Array.isArray()` and `instanceof Array`?
+146. How do you flatten a nested array?
 
 ## Object Methods & Immutability
 
-145. What do `Object.keys()`, `Object.values()`, and `Object.entries()` return?
-146. What is `Object.freeze()`?
-147. What is the difference between `Object.freeze()` and `const`?
-148. Is `Object.freeze()` deep or shallow?
-149. What is `Object.seal()`?
-150. What is `Object.defineProperty()`?
-151. What is the difference between `enumerable`, `configurable`, and `writable` property descriptors?
-152. What is the difference between `Object.assign()` and the object spread operator?
-153. How do you merge two objects without mutating the originals?
+147. What do `Object.keys()`, `Object.values()`, and `Object.entries()` return?
+148. What is `Object.freeze()`?
+149. What is the difference between `Object.freeze()` and `const`?
+150. Is `Object.freeze()` deep or shallow?
+151. What is `Object.seal()`?
+152. What is `Object.defineProperty()`?
+153. What is the difference between `enumerable`, `configurable`, and `writable` property descriptors?
+154. What is the difference between `Object.assign()` and the object spread operator?
+155. How do you merge two objects without mutating the originals?
 
 ---
 
-# Modern JavaScript (ES6+)
+# Error Handling
 
-## Destructuring & Spread
+156. What is the difference between `throw` and `return`?
+157. What happens if you `throw` inside a `try` block?
+158. What does `finally` always do?
+159. Does `finally` run even if there is a `return` inside `try`?
+160. What are the built-in `Error` types in JavaScript?
+161. How do you create a Custom Error class?
+162. How do you distinguish between `Error` types using `instanceof`?
+163. What is the difference between `throw new Error()` and `console.error()`?
+164. How do you handle errors in `async/await` vs `Promises`?
+165. What is an Unhandled Promise Rejection?
+166. How do you catch Unhandled Promise Rejections globally?
+167. When should you throw an error instead of returning a value?
 
-154. What is Destructuring?
-155. What is the difference between `Array` and `Object Destructuring`?
-156. What are Default Values in Destructuring?
-157. What is the Spread Operator?
-158. What is the Rest Parameter?
-159. What is the difference between Spread and Rest?
-160. How do you deep clone an object?
-161. What are the limitations of the Spread Operator for cloning?
-162. What are computed property names?
-163. What are enhanced object literals?
+---
 
-## Optional Chaining & Nullish Coalescing
+# Modules
 
-164. What is Optional Chaining (`?.`)?
-165. What is the Nullish Coalescing operator (`??`)?
-166. What is the difference between `??` and `||`?
-167. What are Logical Assignment operators (`&&=`, `||=`, `??=`)?
-
-## Iterators & Iterables
-
-168. What is an Iterable?
-169. What is an Iterator?
-170. What is the Iterator Protocol?
-171. What is a `Symbol.iterator`?
-172. How does `for...of` work internally?
-173. What is the difference between `for...of` and `for...in`?
-174. What is the difference between `Map` and a plain `Object`?
-175. What is a `Set`?
-176. What is a `WeakMap`?
-177. What is a `WeakSet`, and when would you use it?
+168. What is the difference between ES Modules and CommonJS?
+169. What is a named export vs a default export?
+170. Can you have multiple default exports in one file?
+171. What is a re-export and when would you use it?
+172. What is a dynamic `import()`?
+173. When would you use dynamic import over static import?
+174. What is tree shaking and how do ES Modules enable it?
+175. Why can't CommonJS be tree-shaken as effectively?
+176. What is a circular dependency and how do ES Modules handle it?
+177. What is the difference between `import` and `require`?
 
 ---
 
@@ -304,11 +304,10 @@ These questions cover JS fundamentals, closures, async, error handling, modules,
 207. What is the Fetch API?
 208. What is CORS?
 209. What are HTTP methods, and when are they used?
-210. What is the difference between HTTP/1.1 and HTTP/2?
-211. What is a WebSocket?
-212. What is the difference between Fetch API and XMLHttpRequest (XHR)?
-213. What is the same-origin policy?
-214. What is the difference between authentication and authorization?
+210. What is a WebSocket?
+211. What is the difference between Fetch API and XMLHttpRequest (XHR)?
+212. What is the same-origin policy?
+213. What is the difference between authentication and authorization?
 
 ---
 
@@ -319,4 +318,4 @@ If you can confidently answer:
 - ✅ 80+ Questions → Good for Mid-Level JS Interviews
 - ✅ 140+ Questions → Strong for 4–5 Years Experience
 - ✅ 200+ Questions → Senior Frontend Interview Ready
-- ✅ 214 Questions → JS Internals & Architecture Level Understanding
+- ✅ 213 Questions → JS Internals & Architecture Level Understanding
